@@ -23,7 +23,7 @@ export function getImageUrl(path: string): string {
     }
   } catch (e) {
     // 如果无法访问Next.js数据，继续使用默认逻辑
-    console.warn("无法从Next.js配置中获取basePath");
+    console.warn("无法从Next.js配置中获取basePath: ", e);
   }
 
   // 客户端环境，检查当前URL
