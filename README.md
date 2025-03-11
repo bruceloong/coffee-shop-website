@@ -20,13 +20,14 @@
 - [Framer Motion](https://www.framer.com/motion/) - 动画库
 - [GSAP](https://greensock.com/gsap/) - 高级动画库
 - [EmailJS](https://www.emailjs.com/) - 客户端邮件发送
+- [pnpm](https://pnpm.io/) - 快速、节省磁盘空间的包管理器
 
 ## 开始使用
 
 ### 前提条件
 
 - Node.js 18.0.0 或更高版本
-- npm 或 yarn 或 pnpm 或 bun
+- pnpm 8.0.0 或更高版本 (推荐)，或 npm 或 yarn 或 bun
 
 ### 安装
 
@@ -40,11 +41,13 @@ cd coffee-shop-website
 2. 安装依赖
 
 ```bash
+# 使用pnpm (推荐)
+pnpm install
+
+# 或使用其他包管理器
 npm install
 # 或
 yarn
-# 或
-pnpm install
 # 或
 bun install
 ```
@@ -58,11 +61,13 @@ node scripts/download-images.js
 4. 启动开发服务器
 
 ```bash
+# 使用pnpm (推荐)
+pnpm dev
+
+# 或使用其他包管理器
 npm run dev
 # 或
 yarn dev
-# 或
-pnpm dev
 # 或
 bun dev
 ```
@@ -111,12 +116,13 @@ coffee-shop-website/
 该项目可以部署到任何支持 Next.js 的平台，如 Vercel、Netlify 或自托管服务器。
 
 ```bash
-# 构建生产版本
+# 使用pnpm构建 (推荐)
+pnpm build
+
+# 或使用其他包管理器
 npm run build
 # 或
 yarn build
-# 或
-pnpm build
 # 或
 bun build
 ```
@@ -131,11 +137,18 @@ bun build
 
    - 将 `GITHUB_USERNAME` 更改为您的 GitHub 用户名
    - 将 `REPO_NAME` 更改为您的仓库名称
+   - 确认 `PACKAGE_MANAGER` 设置为您使用的包管理器（默认为"pnpm"）
 
 4. 运行部署命令：
 
 ```bash
+# 使用pnpm (推荐)
+pnpm deploy
+
+# 或使用其他包管理器
 npm run deploy
+# 或
+yarn deploy
 ```
 
 5. 部署完成后，您的网站将可以通过以下 URL 访问：

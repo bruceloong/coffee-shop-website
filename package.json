@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "node scripts/deploy-gh-pages.js"
+    "deploy": "node scripts/deploy-gh-pages.js",
+    "pnpm:install": "pnpm install",
+    "pnpm:dev": "pnpm run dev",
+    "pnpm:build": "pnpm run build",
+    "pnpm:start": "pnpm run start",
+    "pnpm:lint": "pnpm run lint",
+    "pnpm:deploy": "pnpm run deploy"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -28,5 +34,6 @@
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@8.15.4"
 }

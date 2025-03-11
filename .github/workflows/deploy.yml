@@ -19,10 +19,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
+          cache: "pnpm"
+
+      - name: Install pnpm 📦
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
 
       - name: Install dependencies 📦
-        run: npm ci
+        run: pnpm install
 
       - name: Download images 🖼️
         run: node scripts/download-images.js
@@ -45,7 +51,7 @@ jobs:
           EOL
 
       - name: Build 🏗️
-        run: npm run build
+        run: pnpm run build
 
       - name: Add .nojekyll file 📄
         run: touch out/.nojekyll

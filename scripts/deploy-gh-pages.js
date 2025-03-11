@@ -6,6 +6,7 @@ const path = require("path");
 const GITHUB_USERNAME = "bruceloong"; // 替换为您的GitHub用户名
 const REPO_NAME = "coffee-shop-website"; // 替换为您的仓库名称
 const BRANCH_NAME = "gh-pages"; // GitHub Pages分支名称
+const PACKAGE_MANAGER = "pnpm"; // 包管理器: npm, yarn, pnpm
 
 // 颜色输出
 const colors = {
@@ -24,6 +25,18 @@ const log = {
   warning: (msg) => console.log(`${colors.yellow}⚠ ${msg}${colors.reset}`),
   error: (msg) => console.log(`${colors.red}✗ ${msg}${colors.reset}`),
 };
+
+// 获取构建命令
+function getBuildCommand() {
+  switch (PACKAGE_MANAGER) {
+    case "yarn":
+      return "yarn build";
+    case "pnpm":
+      return "pnpm run build";
+    default:
+      return "npm run build";
+  }
+}
 
 // 执行命令并打印输出
 function exec(command) {
@@ -66,7 +79,7 @@ async function deploy() {
 
     // 1. 构建项目
     log.info("开始构建项目...");
-    if (!exec("npm run build")) {
+    if (!exec(getBuildCommand())) {
       return;
     }
     log.success("项目构建完成");
@@ -103,7 +116,7 @@ export default nextConfig;
 
     // 4. 重新构建项目
     log.info("使用GitHub Pages配置重新构建项目...");
-    if (!exec("npm run build")) {
+    if (!exec(getBuildCommand())) {
       // 恢复备份
       if (nextConfigContent) {
         fs.writeFileSync(nextConfigPath, nextConfigContent, "utf8");
