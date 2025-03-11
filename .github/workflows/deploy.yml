@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Install dependencies 📦
+        run: npm ci
+
+      - name: Download images 🖼️
+        run: node scripts/download-images.js
+
+      - name: Configure Next.js for GitHub Pages 🔧
+        run: |
+          cat > next.config.ts << EOL
+          import { NextConfig } from 'next';
+
+          const nextConfig: NextConfig = {
+            output: 'export',
+            basePath: '/${{ github.event.repository.name }}',
+            assetPrefix: '/${{ github.event.repository.name }}/',
+            images: {
+              unoptimized: true,
+            },
+          };
+
+          export default nextConfig;
+          EOL
+
+      - name: Build 🏗️
+        run: npm run build
+
+      - name: Add .nojekyll file 📄
+        run: touch out/.nojekyll
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: out
+          branch: gh-pages
