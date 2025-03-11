@@ -10,6 +10,7 @@
     "lint": "next lint",
     "deploy": "node scripts/deploy-gh-pages.js",
     "check-export": "node scripts/check-export.js",
+    "check-images": "node scripts/check-images.js",
     "pnpm:install": "pnpm install",
     "pnpm:dev": "pnpm run dev",
     "pnpm:build": "pnpm run build",

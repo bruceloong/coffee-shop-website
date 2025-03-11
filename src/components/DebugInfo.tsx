@@ -9,12 +9,27 @@ export default function DebugInfo() {
   const env = detectEnvironment();
 
   // 测试不同的图片路径
-  const testPaths = ["/espresso.jpg", "latte.jpg", "/images/cappuccino.jpg"];
+  const testPaths = [
+    "/espresso.jpg",
+    "latte.jpg",
+    "/images/cappuccino.jpg",
+    "/hero-bg.jpg",
+    "about-image.jpg",
+  ];
 
   const resolvedPaths = testPaths.map((path) => ({
     original: path,
     resolved: getImageUrl(path),
   }));
+
+  // 获取Next.js配置信息
+  let nextConfig = "未找到";
+  try {
+    const nextData = window.__NEXT_DATA__;
+    nextConfig = JSON.stringify(nextData, null, 2);
+  } catch (e) {
+    nextConfig = `获取失败: ${e}`;
+  }
 
   if (!isVisible) {
     return (
@@ -65,10 +80,14 @@ export default function DebugInfo() {
             <span className="font-medium">路径:</span>{" "}
             {typeof window !== "undefined" ? window.location.pathname : "N/A"}
           </li>
+          <li>
+            <span className="font-medium">当前URL:</span>{" "}
+            {typeof window !== "undefined" ? window.location.href : "N/A"}
+          </li>
         </ul>
       </div>
 
-      <div>
+      <div className="mb-4">
         <h4 className="font-semibold mb-2">图片路径解析:</h4>
         <ul className="text-sm space-y-2">
           {resolvedPaths.map((item, index) => (
@@ -85,7 +104,8 @@ export default function DebugInfo() {
                   <Image
                     src={item.resolved}
                     alt="测试图片"
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src =
@@ -98,6 +118,13 @@ export default function DebugInfo() {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="mb-4">
+        <h4 className="font-semibold mb-2">Next.js配置:</h4>
+        <div className="text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded overflow-auto max-h-40">
+          <pre>{nextConfig}</pre>
+        </div>
       </div>
     </div>
   );
