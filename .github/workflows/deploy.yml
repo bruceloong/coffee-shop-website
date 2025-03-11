@@ -94,7 +94,7 @@ jobs:
           # 创建一个简单的测试文件
           echo "<html><body><h1>测试页面</h1><p>如果您看到此页面，说明部署成功!</p></body></html>" > out/test.html
           echo "已创建测试文件 test.html"
-          
+
           # 备份原始index.html (如果存在)
           if [ -f out/index.html ]; then
             cp out/index.html out/index.original.html
@@ -103,43 +103,11 @@ jobs:
             echo "原始index.html内容前50行:"
             head -n 50 out/index.html
           fi
-          
-          # 创建一个简单的index.html测试文件
-          export DEPLOY_DATE=$(date)
-          export GITHUB_REPO="${GITHUB_REPOSITORY}"
-          cat > out/index.html << EOL
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>咖啡店网站 - 测试页面</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
-        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #5D4037; }
-        .links { margin-top: 20px; }
-        .links a { display: block; margin-bottom: 10px; color: #795548; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>咖啡店网站 - 测试页面</h1>
-        <p>如果您看到此页面，说明GitHub Pages部署成功!</p>
-        <p>这是一个临时测试页面，用于验证GitHub Pages部署是否正常工作。</p>
-        
-        <div class="links">
-            <h2>测试链接:</h2>
-            <a href="test.html">测试页面</a>
-            <a href="index.original.html">原始Next.js生成的页面</a>
-        </div>
-        
-        <p>部署时间: ${DEPLOY_DATE}</p>
-        <p>仓库: ${GITHUB_REPO}</p>
-    </div>
-</body>
-</html>
-EOL
+
+          # 创建一个简单的index.html测试文件 (单行版本)
+          DEPLOY_DATE=$(date)
+          GITHUB_REPO="${GITHUB_REPOSITORY}"
+          echo "<html><head><meta charset=\"UTF-8\"><title>咖啡店网站 - 测试页面</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;line-height:1.6}.container{max-width:800px;margin:0 auto;padding:20px}h1{color:#5D4037}.links{margin-top:20px}.links a{display:block;margin-bottom:10px;color:#795548}</style></head><body><div class=\"container\"><h1>咖啡店网站 - 测试页面</h1><p>如果您看到此页面，说明GitHub Pages部署成功!</p><p>这是一个临时测试页面，用于验证GitHub Pages部署是否正常工作。</p><div class=\"links\"><h2>测试链接:</h2><a href=\"test.html\">测试页面</a><a href=\"index.original.html\">原始Next.js生成的页面</a></div><p>部署时间: $DEPLOY_DATE</p><p>仓库: $GITHUB_REPO</p></div></body></html>" > out/index.html
           echo "已创建简单的index.html测试文件"
 
       - name: Deploy to GitHub Pages 🚀

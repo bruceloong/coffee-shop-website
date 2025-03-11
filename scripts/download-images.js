@@ -1,6 +1,11 @@
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
+import fs from "fs";
+import path from "path";
+import https from "https";
+import { fileURLToPath } from "url";
+
+// 获取当前文件的目录路径
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 创建public/images目录（如果不存在）
 const imagesDir = path.join(__dirname, "../public");
