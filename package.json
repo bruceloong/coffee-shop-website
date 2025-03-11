@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "deploy": "node scripts/deploy-gh-pages.js",
+    "check-export": "node scripts/check-export.js",
     "pnpm:install": "pnpm install",
     "pnpm:dev": "pnpm run dev",
     "pnpm:build": "pnpm run build",
     "pnpm:start": "pnpm run start",
     "pnpm:lint": "pnpm run lint",
-    "pnpm:deploy": "pnpm run deploy"
+    "pnpm:deploy": "pnpm run deploy",
+    "pnpm:check-export": "pnpm run check-export"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

@@ -33,31 +33,30 @@ jobs:
       - name: Download images 🖼️
         run: node scripts/download-images.js
 
-      - name: Configure Next.js for GitHub Pages 🔧
-        run: |
-          cat > next.config.ts << EOL
-          import { NextConfig } from 'next';
-
-          const nextConfig: NextConfig = {
-            output: 'export',
-            basePath: '/${{ github.event.repository.name }}',
-            assetPrefix: '/${{ github.event.repository.name }}/',
-            images: {
-              unoptimized: true,
-            },
-          };
-
-          export default nextConfig;
-          EOL
-
       - name: Build 🏗️
         run: pnpm run build
+        env:
+          # 设置环境变量，让Next.js知道这是GitHub Pages环境
+          GITHUB_ACTIONS: "true"
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Check export directory 🔍
+        run: node scripts/check-export.js
 
       - name: Add .nojekyll file 📄
-        run: touch out/.nojekyll
+        run: |
+          touch out/.nojekyll
+          # 确保没有README.md文件在out目录中
+          if [ -f out/README.md ]; then
+            rm out/README.md
+          fi
+          # 列出out目录内容
+          echo "输出目录内容:"
+          ls -la out/
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: out
           branch: gh-pages
+          clean: true # 清除目标分支上的旧文件
