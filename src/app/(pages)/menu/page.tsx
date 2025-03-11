@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { getImageUrl } from "@/utils/imageUtils";
 
 // 菜单分类
 type MenuCategory = "coffee" | "tea" | "dessert" | "food";
@@ -276,7 +277,7 @@ export default function MenuPage() {
               <div className="relative h-56">
                 <div className="absolute inset-0 bg-gray-200 animate-pulse" />
                 <Image
-                  src={item.image}
+                  src={getImageUrl(item.image)}
                   alt={item.name}
                   fill
                   className="object-cover"

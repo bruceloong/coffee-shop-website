@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getImageUrl } from "@/utils/imageUtils";
 
 export default function AboutPage() {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -137,7 +138,7 @@ export default function AboutPage() {
               className="order-1 md:order-2 relative h-[400px] rounded-lg overflow-hidden"
             >
               <Image
-                src="/story-image.jpg"
+                src={getImageUrl("/story-image.jpg")}
                 alt="我们的咖啡店故事"
                 fill
                 className="object-cover"
@@ -383,7 +384,7 @@ export default function AboutPage() {
 
               <div className="relative h-64 md:h-full rounded-lg overflow-hidden">
                 <Image
-                  src="/join-team.jpg"
+                  src={getImageUrl("/join-team.jpg")}
                   alt="加入我们的团队"
                   fill
                   className="object-cover"

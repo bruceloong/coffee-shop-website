@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useInView } from "framer-motion";
+import { getImageUrl } from "@/utils/imageUtils";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -92,7 +94,7 @@ export default function Home() {
         <div className="hero-image absolute inset-0 z-0">
           <div className="absolute inset-0 bg-black/40 z-10" />
           <Image
-            src="/hero-bg.jpg"
+            src={getImageUrl("/hero-bg.jpg")}
             alt="咖啡店内景"
             fill
             priority
@@ -269,7 +271,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="about-image relative h-[400px] rounded-lg overflow-hidden">
               <Image
-                src="/about-image.jpg"
+                src={getImageUrl("/about-image.jpg")}
                 alt="我们的咖啡店"
                 fill
                 className="object-cover"
