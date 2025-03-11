@@ -6,6 +6,7 @@ import Image from "next/image";
 
 export default function DebugInfo() {
   const [isVisible, setIsVisible] = useState(false);
+  const [showFullConfig, setShowFullConfig] = useState(false);
   const env = detectEnvironment();
 
   // 测试不同的图片路径
@@ -24,9 +25,28 @@ export default function DebugInfo() {
 
   // 获取Next.js配置信息
   let nextConfig = "未找到";
+  let basePath = "未找到";
+  let assetPrefix = "未找到";
   try {
     const nextData = window.__NEXT_DATA__;
-    nextConfig = JSON.stringify(nextData, null, 2);
+    if (nextData) {
+      // 尝试获取basePath
+      if (nextData.basePath) {
+        basePath = nextData.basePath;
+      } else if (nextData.runtimeConfig?.basePath) {
+        basePath = `从runtimeConfig: ${nextData.runtimeConfig.basePath}`;
+      }
+
+      // 尝试获取assetPrefix
+      if (nextData.assetPrefix) {
+        assetPrefix = nextData.assetPrefix;
+      } else if (nextData.runtimeConfig?.assetPrefix) {
+        assetPrefix = `从runtimeConfig: ${nextData.runtimeConfig.assetPrefix}`;
+      }
+
+      // 完整配置
+      nextConfig = JSON.stringify(nextData, null, 2);
+    }
   } catch (e) {
     nextConfig = `获取失败: ${e}`;
   }
@@ -84,6 +104,12 @@ export default function DebugInfo() {
             <span className="font-medium">当前URL:</span>{" "}
             {typeof window !== "undefined" ? window.location.href : "N/A"}
           </li>
+          <li>
+            <span className="font-medium">basePath:</span> {basePath}
+          </li>
+          <li>
+            <span className="font-medium">assetPrefix:</span> {assetPrefix}
+          </li>
         </ul>
       </div>
 
@@ -121,10 +147,20 @@ export default function DebugInfo() {
       </div>
 
       <div className="mb-4">
-        <h4 className="font-semibold mb-2">Next.js配置:</h4>
-        <div className="text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded overflow-auto max-h-40">
-          <pre>{nextConfig}</pre>
+        <div className="flex justify-between items-center">
+          <h4 className="font-semibold mb-2">Next.js配置:</h4>
+          <button
+            onClick={() => setShowFullConfig(!showFullConfig)}
+            className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"
+          >
+            {showFullConfig ? "隐藏详情" : "显示详情"}
+          </button>
         </div>
+        {showFullConfig && (
+          <div className="text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded overflow-auto max-h-40">
+            <pre>{nextConfig}</pre>
+          </div>
+        )}
       </div>
     </div>
   );

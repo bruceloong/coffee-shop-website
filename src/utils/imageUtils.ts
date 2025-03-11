@@ -29,11 +29,22 @@ export function getImageUrl(path: string): string {
   let basePath = "";
   try {
     const nextData = window.__NEXT_DATA__;
-    if (nextData?.basePath) {
-      basePath = nextData.basePath;
-    } else if (nextData?.buildId && nextData?.props?.pageProps) {
-      // 可能是在Next.js应用中，但basePath不在预期位置
-      console.log("Next.js数据存在，但未找到basePath");
+
+    // 尝试从不同位置获取basePath
+    if (nextData) {
+      // 可能的位置1: 直接在nextData上
+      if (nextData.basePath) {
+        basePath = nextData.basePath;
+      }
+      // 可能的位置2: 在runtimeConfig中
+      else if (nextData.runtimeConfig?.basePath) {
+        basePath = nextData.runtimeConfig.basePath;
+      }
+      // 可能的位置3: 在buildId中提取
+      else if (nextData.buildId) {
+        // 检查是否有其他可能的位置
+        console.log("Next.js数据存在，但未找到basePath");
+      }
     }
   } catch (e) {
     // 如果无法访问Next.js数据，继续使用默认逻辑
