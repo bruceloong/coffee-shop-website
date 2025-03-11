@@ -2,16 +2,16 @@
 interface Window {
   __NEXT_DATA__?: {
     props?: {
-      pageProps?: any;
-      [key: string]: any;
+      pageProps?: Record<string, unknown>;
+      [key: string]: unknown;
     };
     page?: string;
-    query?: any;
+    query?: Record<string, unknown>;
     buildId?: string;
     assetPrefix?: string;
     runtimeConfig?: {
       basePath?: string;
-      [key: string]: any;
+      [key: string]: unknown;
     };
     nextExport?: boolean;
     autoExport?: boolean;
@@ -26,9 +26,9 @@ interface Window {
     locale?: string;
     locales?: string[];
     defaultLocale?: string;
-    domainLocales?: any;
-    scriptLoader?: any[];
+    domainLocales?: Record<string, unknown>;
+    scriptLoader?: unknown[];
     basePath?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
