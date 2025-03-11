@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { detectEnvironment, getImageUrl } from "@/utils/imageUtils";
+import Image from "next/image";
 
 export default function DebugInfo() {
   const [isVisible, setIsVisible] = useState(false);
@@ -81,7 +82,7 @@ export default function DebugInfo() {
               <div className="mt-1">
                 <span className="font-medium">预览:</span>
                 <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 mt-1 relative overflow-hidden">
-                  <img
+                  <Image
                     src={item.resolved}
                     alt="测试图片"
                     className="h-full w-full object-cover"

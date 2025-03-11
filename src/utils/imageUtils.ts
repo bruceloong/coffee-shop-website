@@ -16,7 +16,7 @@ export function getImageUrl(path: string): string {
   // 尝试从Next.js数据中获取basePath
   let basePath = "";
   try {
-    // @ts-ignore - 访问Next.js内部数据
+    // @ts-expect-error - 访问Next.js内部数据
     const nextData = window.__NEXT_DATA__;
     if (nextData && nextData.basePath) {
       basePath = nextData.basePath;
