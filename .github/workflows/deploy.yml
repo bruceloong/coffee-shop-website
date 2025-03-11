@@ -34,7 +34,26 @@ jobs:
         run: node scripts/download-images.js
 
       - name: Build 🏗️
-        run: pnpm run build
+        run: |
+          echo "开始构建..."
+          echo "GITHUB_ACTIONS=${GITHUB_ACTIONS}"
+          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+          # 显示next.config.ts内容
+          echo "next.config.ts内容:"
+          cat next.config.ts
+          # 执行构建
+          pnpm run build
+          # 检查构建结果
+          echo "构建完成，检查out目录是否存在:"
+          if [ -d "out" ]; then
+            echo "out目录存在"
+            echo "out目录内容:"
+            ls -la out/
+          else
+            echo "out目录不存在!"
+            echo "当前目录内容:"
+            ls -la
+          fi
         env:
           # 设置环境变量，让Next.js知道这是GitHub Pages环境
           GITHUB_ACTIONS: "true"
@@ -43,20 +62,118 @@ jobs:
       - name: Check export directory 🔍
         run: node scripts/check-export.js
 
+      - name: Debug info before deployment 🔍
+        run: |
+          echo "仓库信息:"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "输出目录内容:"
+          ls -la out/
+          echo "检查index.html文件:"
+          if [ -f out/index.html ]; then
+            echo "index.html 存在"
+            head -n 20 out/index.html
+          else
+            echo "index.html 不存在!"
+          fi
+          echo "检查404.html文件:"
+          if [ -f out/404.html ]; then
+            echo "404.html 存在"
+          else
+            echo "404.html 不存在!"
+          fi
+
       - name: Add .nojekyll file 📄
         run: |
           touch out/.nojekyll
           # 确保没有README.md文件在out目录中
           if [ -f out/README.md ]; then
             rm out/README.md
+            echo "已删除 out/README.md 文件"
           fi
-          # 列出out目录内容
-          echo "输出目录内容:"
-          ls -la out/
+          # 创建一个简单的测试文件
+          echo "<html><body><h1>测试页面</h1><p>如果您看到此页面，说明部署成功!</p></body></html>" > out/test.html
+          echo "已创建测试文件 test.html"
+          
+          # 备份原始index.html (如果存在)
+          if [ -f out/index.html ]; then
+            cp out/index.html out/index.original.html
+            echo "已备份原始index.html"
+            # 检查index.html内容
+            echo "原始index.html内容前50行:"
+            head -n 50 out/index.html
+          fi
+          
+          # 创建一个简单的index.html测试文件
+          echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咖啡店网站 - 测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #5D4037; }
+        .links { margin-top: 20px; }
+        .links a { display: block; margin-bottom: 10px; color: #795548; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>咖啡店网站 - 测试页面</h1>
+        <p>如果您看到此页面，说明GitHub Pages部署成功!</p>
+        <p>这是一个临时测试页面，用于验证GitHub Pages部署是否正常工作。</p>
+        
+        <div class="links">
+            <h2>测试链接:</h2>
+            <a href="test.html">测试页面</a>
+            <a href="index.original.html">原始Next.js生成的页面</a>
+        </div>
+        
+        <p>部署时间: ' $(date) '</p>
+        <p>仓库: ${{ github.repository }}</p>
+    </div>
+</body>
+</html>' > out/index.html
+          echo "已创建简单的index.html测试文件"
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
+        id: deployment
         with:
           folder: out
           branch: gh-pages
           clean: true # 清除目标分支上的旧文件
+
+      - name: Check gh-pages branch after deployment 🔍
+        if: success()
+        run: |
+          echo "部署完成，检查gh-pages分支内容"
+          git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-check
+          echo "gh-pages分支内容:"
+          ls -la gh-pages-check/
+          echo "检查index.html文件:"
+          if [ -f gh-pages-check/index.html ]; then
+            echo "index.html 存在于gh-pages分支"
+            head -n 20 gh-pages-check/index.html
+          else
+            echo "index.html 不存在于gh-pages分支!"
+          fi
+          echo "检查.nojekyll文件:"
+          if [ -f gh-pages-check/.nojekyll ]; then
+            echo ".nojekyll 存在于gh-pages分支"
+          else
+            echo ".nojekyll 不存在于gh-pages分支!"
+          fi
+          echo "检查test.html文件:"
+          if [ -f gh-pages-check/test.html ]; then
+            echo "test.html 存在于gh-pages分支"
+          else
+            echo "test.html 不存在于gh-pages分支!"
+          fi
+
+      - name: Output deployment URL 🌐
+        run: |
+          echo "网站已部署到: https://$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]').github.io/$(echo '${{ github.repository }}' | cut -d'/' -f2)/"
+          echo "测试页面: https://$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]').github.io/$(echo '${{ github.repository }}' | cut -d'/' -f2)/test.html"
