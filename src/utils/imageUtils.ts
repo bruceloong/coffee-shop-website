@@ -8,23 +8,22 @@ export function getImageUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   // 检查是否在浏览器环境
-  if (typeof window === "undefined") {
-    // 服务器端渲染环境，返回基本路径
-    return `/images${normalizedPath}`;
-  }
+  // if (typeof window === "undefined") {
+  //   // 服务器端渲染环境，返回基本路径
+  //   return `/images${normalizedPath}`;
+  // }
 
-  // 尝试从Next.js数据中获取basePath
+  // // 尝试从Next.js数据中获取basePath
   let basePath = "";
-  try {
-    // @ts-expect-error - 访问Next.js内部数据
-    const nextData = window.__NEXT_DATA__;
-    if (nextData && nextData.basePath) {
-      basePath = nextData.basePath;
-    }
-  } catch (e) {
-    // 如果无法访问Next.js数据，继续使用默认逻辑
-    console.warn("无法从Next.js配置中获取basePath: ", e);
-  }
+  // try {
+  //   const nextData = window.__NEXT_DATA__;
+  //   if (nextData?.runtimeConfig?.basePath) {
+  //     basePath = nextData.runtimeConfig.basePath;
+  //   }
+  // } catch (e) {
+  //   // 如果无法访问Next.js数据，继续使用默认逻辑
+  //   console.warn("无法从Next.js配置中获取basePath: ", e);
+  // }
 
   // 客户端环境，检查当前URL
   const hostname = window.location.hostname;
