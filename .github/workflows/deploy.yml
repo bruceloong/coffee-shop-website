@@ -105,7 +105,10 @@ jobs:
           fi
           
           # 创建一个简单的index.html测试文件
-          echo '<!DOCTYPE html>
+          export DEPLOY_DATE=$(date)
+          export GITHUB_REPO="${GITHUB_REPOSITORY}"
+          cat > out/index.html << EOL
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -131,11 +134,12 @@ jobs:
             <a href="index.original.html">原始Next.js生成的页面</a>
         </div>
         
-        <p>部署时间: ' $(date) '</p>
-        <p>仓库: ${{ github.repository }}</p>
+        <p>部署时间: ${DEPLOY_DATE}</p>
+        <p>仓库: ${GITHUB_REPO}</p>
     </div>
 </body>
-</html>' > out/index.html
+</html>
+EOL
           echo "已创建简单的index.html测试文件"
 
       - name: Deploy to GitHub Pages 🚀
