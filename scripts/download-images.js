@@ -8,9 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 创建public/images目录（如果不存在）
-const imagesDir = path.join(__dirname, "../public");
+const imagesDir = path.join(__dirname, "../public/images");
 if (!fs.existsSync(imagesDir)) {
   fs.mkdirSync(imagesDir, { recursive: true });
+  console.log("创建目录: public/images");
 }
 
 // 图片列表

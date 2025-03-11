@@ -72,14 +72,6 @@ if (!fs.existsSync(nojekyllPath)) {
   console.log(".nojekyll文件已存在");
 }
 
-// 创建一个测试HTML文件
-const testPath = path.join(outDir, "test.html");
-fs.writeFileSync(
-  testPath,
-  "<html><body><h1>测试页面</h1><p>如果您看到此页面，说明部署成功!</p></body></html>"
-);
-console.log("创建了测试文件test.html");
-
 // 检查404.html是否存在
 const notFoundPath = path.join(outDir, "404.html");
 if (!fs.existsSync(notFoundPath)) {
@@ -91,6 +83,38 @@ if (!fs.existsSync(notFoundPath)) {
   console.log("404.html文件已创建");
 } else {
   console.log("404.html文件已存在");
+}
+
+// 检查images目录是否存在
+const imagesDir = path.join(outDir, "images");
+if (!fs.existsSync(imagesDir)) {
+  console.warn("警告: out/images目录不存在，创建该目录");
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+// 检查public/images目录是否存在
+const publicImagesDir = path.join(__dirname, "../public/images");
+if (fs.existsSync(publicImagesDir)) {
+  console.log("复制public/images目录中的图片到out/images目录");
+
+  // 读取public/images目录中的所有文件
+  const imageFiles = fs.readdirSync(publicImagesDir);
+
+  // 复制每个图片文件到out/images目录
+  imageFiles.forEach((file) => {
+    const sourcePath = path.join(publicImagesDir, file);
+    const destPath = path.join(imagesDir, file);
+
+    // 只复制文件，不复制目录
+    if (fs.statSync(sourcePath).isFile()) {
+      fs.copyFileSync(sourcePath, destPath);
+      console.log(`复制图片: ${file}`);
+    }
+  });
+
+  console.log(`共复制了 ${imageFiles.length} 个图片文件`);
+} else {
+  console.warn("警告: public/images目录不存在，无法复制图片");
 }
 
 console.log("检查完成! 导出目录看起来没有问题。");

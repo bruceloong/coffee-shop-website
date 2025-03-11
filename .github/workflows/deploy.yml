@@ -31,7 +31,11 @@ jobs:
         run: pnpm install
 
       - name: Download images 🖼️
-        run: node scripts/download-images.js
+        run: |
+          echo "下载图片..."
+          node scripts/download-images.js
+          echo "图片下载完成，检查图片目录:"
+          ls -la public/images/
 
       - name: Build 🏗️
         run: |
@@ -60,7 +64,13 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Check export directory 🔍
-        run: node scripts/check-export.js
+        run: |
+          # 运行导出检查脚本，该脚本会自动处理图片复制
+          node scripts/check-export.js
+
+          # 检查out/images目录
+          echo "检查out/images目录内容:"
+          ls -la out/images/ || echo "out/images目录不存在或为空"
 
       - name: Debug info before deployment 🔍
         run: |
@@ -91,24 +101,6 @@ jobs:
             rm out/README.md
             echo "已删除 out/README.md 文件"
           fi
-          # 创建一个简单的测试文件
-          echo "<html><body><h1>测试页面</h1><p>如果您看到此页面，说明部署成功!</p></body></html>" > out/test.html
-          echo "已创建测试文件 test.html"
-
-          # 备份原始index.html (如果存在)
-          if [ -f out/index.html ]; then
-            cp out/index.html out/index.original.html
-            echo "已备份原始index.html"
-            # 检查index.html内容
-            echo "原始index.html内容前50行:"
-            head -n 50 out/index.html
-          fi
-
-          # 创建一个简单的index.html测试文件 (单行版本)
-          DEPLOY_DATE=$(date)
-          GITHUB_REPO="${GITHUB_REPOSITORY}"
-          echo "<html><head><meta charset=\"UTF-8\"><title>咖啡店网站 - 测试页面</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;line-height:1.6}.container{max-width:800px;margin:0 auto;padding:20px}h1{color:#5D4037}.links{margin-top:20px}.links a{display:block;margin-bottom:10px;color:#795548}</style></head><body><div class=\"container\"><h1>咖啡店网站 - 测试页面</h1><p>如果您看到此页面，说明GitHub Pages部署成功!</p><p>这是一个临时测试页面，用于验证GitHub Pages部署是否正常工作。</p><div class=\"links\"><h2>测试链接:</h2><a href=\"test.html\">测试页面</a><a href=\"index.original.html\">原始Next.js生成的页面</a></div><p>部署时间: $DEPLOY_DATE</p><p>仓库: $GITHUB_REPO</p></div></body></html>" > out/index.html
-          echo "已创建简单的index.html测试文件"
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
@@ -138,14 +130,7 @@ jobs:
           else
             echo ".nojekyll 不存在于gh-pages分支!"
           fi
-          echo "检查test.html文件:"
-          if [ -f gh-pages-check/test.html ]; then
-            echo "test.html 存在于gh-pages分支"
-          else
-            echo "test.html 不存在于gh-pages分支!"
-          fi
 
       - name: Output deployment URL 🌐
         run: |
           echo "网站已部署到: https://$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]').github.io/$(echo '${{ github.repository }}' | cut -d'/' -f2)/"
-          echo "测试页面: https://$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]').github.io/$(echo '${{ github.repository }}' | cut -d'/' -f2)/test.html"
