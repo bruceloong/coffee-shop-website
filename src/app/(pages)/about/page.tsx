@@ -4,8 +4,12 @@ import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { getImageUrl } from "@/utils/imageUtils";
-import OptimizedImage from "@/components/OptimizedImage";
+import Image from "next/image";
+import Team1Image from "@/assets/images/team-1.jpg";
+import Team2Image from "@/assets/images/team-2.jpg";
+import Team3Image from "@/assets/images/team-3.jpg";
+import JoinTeamImage from "@/assets/images/join-team.jpg";
+import StoryImage from "@/assets/images/story-image.jpg";
 
 export default function AboutPage() {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -58,19 +62,19 @@ export default function AboutPage() {
       name: "张明",
       role: "创始人 & 首席咖啡师",
       bio: "拥有10年咖啡行业经验，曾获得亚洲咖啡师大赛冠军。",
-      image: "/team-1.jpg",
+      image: Team1Image,
     },
     {
       name: "李华",
       role: "行政总厨",
       bio: "毕业于法国蓝带厨艺学院，专注于创造与咖啡完美搭配的美食。",
-      image: "/team-2.jpg",
+      image: Team2Image,
     },
     {
       name: "王芳",
       role: "店面经理",
       bio: "热情好客，致力于为每位顾客创造难忘的体验。",
-      image: "/team-3.jpg",
+      image: Team3Image,
     },
   ];
 
@@ -137,8 +141,8 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="order-1 md:order-2 relative h-[400px] rounded-lg overflow-hidden"
             >
-              <OptimizedImage
-                src={getImageUrl("/story-image.jpg")}
+              <Image
+                src={StoryImage}
                 alt="我们的咖啡店故事"
                 fill
                 className="object-cover"
@@ -347,7 +351,7 @@ export default function AboutPage() {
                 className="bg-white dark:bg-[#1a1a1a] rounded-lg overflow-hidden shadow-md"
               >
                 <div className="relative h-64">
-                  <OptimizedImage
+                  <Image
                     src={member.image}
                     alt={member.name}
                     fill
@@ -383,8 +387,8 @@ export default function AboutPage() {
               </div>
 
               <div className="relative h-64 md:h-full rounded-lg overflow-hidden">
-                <OptimizedImage
-                  src={getImageUrl("/join-team.jpg")}
+                <Image
+                  src={JoinTeamImage}
                   alt="加入我们的团队"
                   fill
                   className="object-cover"

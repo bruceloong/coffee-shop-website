@@ -3,10 +3,15 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import OptimizedImage from "@/components/OptimizedImage";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { getImageUrl } from "@/utils/imageUtils";
+import AboutImage from "@/assets/images/about-image.jpg";
+import HeroImage from "@/assets/images/hero-bg.jpg";
+import LatteImage from "@/assets/images/latte.jpg";
+import MochaImage from "@/assets/images/mocha.jpg";
+import CinnamonRollImage from "@/assets/images/cinnamon-roll.jpg";
+import ColdBrewImage from "@/assets/images/cold-brew.jpg";
+import Image from "next/image";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -57,28 +62,28 @@ export default function Home() {
       id: 1,
       name: "经典拿铁",
       description: "丝滑浓郁的意式浓缩与蒸汽牛奶的完美结合",
-      image: "/latte.jpg",
+      image: LatteImage,
       price: "¥32",
     },
     {
       id: 2,
       name: "冰滴咖啡",
       description: "12小时慢滴工艺，带来清爽顺滑的口感",
-      image: "/cold-brew.jpg",
+      image: ColdBrewImage,
       price: "¥38",
     },
     {
       id: 3,
       name: "摩卡",
       description: "浓郁的巧克力与咖啡的经典搭配",
-      image: "/mocha.jpg",
+      image: MochaImage,
       price: "¥36",
     },
     {
       id: 4,
       name: "肉桂卷",
       description: "手工制作，香甜松软，搭配咖啡的绝佳选择",
-      image: "/cinnamon-roll.jpg",
+      image: CinnamonRollImage,
       price: "¥28",
     },
   ];
@@ -92,8 +97,8 @@ export default function Home() {
       >
         <div className="hero-image absolute inset-0 z-0">
           <div className="absolute inset-0 bg-black/40 z-10" />
-          <OptimizedImage
-            src="/hero-bg.jpg"
+          <Image
+            src={HeroImage}
             alt="咖啡店内景"
             fill
             priority
@@ -203,7 +208,7 @@ export default function Home() {
               >
                 <div className="relative h-48">
                   <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                  <OptimizedImage
+                  <Image
                     src={product.image}
                     alt={product.name}
                     fill
@@ -269,8 +274,8 @@ export default function Home() {
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="about-image relative h-[400px] rounded-lg overflow-hidden">
-              <OptimizedImage
-                src={getImageUrl("/about-image.jpg")}
+              <Image
+                src={AboutImage}
                 alt="我们的咖啡店"
                 fill
                 className="object-cover"

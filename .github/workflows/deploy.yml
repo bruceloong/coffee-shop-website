@@ -43,10 +43,6 @@ jobs:
       - name: Add .nojekyll file
         run: |
           touch out/.nojekyll
-          if [ -f out/README.md ]; then
-            echo "WARNING: README.md found in out directory, removing it to prevent GitHub Pages from displaying it instead of index.html"
-            rm out/README.md
-          fi
           echo "Contents of out directory:"
           ls -la out/
 

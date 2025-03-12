@@ -1,8 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import OptimizedImage from "@/components/OptimizedImage";
 import { motion } from "framer-motion";
+import Image, { StaticImageData } from "next/image";
+import EspressoImage from "@/assets/images/espresso.jpg";
+import AmericanoImage from "@/assets/images/americano.jpg";
+import LatteImage from "@/assets/images/latte.jpg";
+import CappuccinoImage from "@/assets/images/cappuccino.jpg";
+import MochaImage from "@/assets/images/mocha.jpg";
+import CaramelMacchiatoImage from "@/assets/images/caramel-macchiato.jpg";
+import ColdBrewImage from "@/assets/images/cold-brew.jpg";
+import PourOverImage from "@/assets/images/pour-over.jpg";
+import EarlGreyImage from "@/assets/images/earl-grey.jpg";
+import JasmineTeaImage from "@/assets/images/jasmine-tea.jpg";
+import MatchaLatteImage from "@/assets/images/matcha-latte.jpg";
+import FruitTeaImage from "@/assets/images/fruit-tea.jpg";
+import TiramisuImage from "@/assets/images/tiramisu.jpg";
+import CheesecakeImage from "@/assets/images/cheesecake.jpg";
+import BrownieImage from "@/assets/images/brownie.jpg";
+import AvocadoToastImage from "@/assets/images/avocado-toast.jpg";
+import SandwichImage from "@/assets/images/sandwich.jpg";
+import SaladBowlImage from "@/assets/images/salad-bowl.jpg";
+import BreakfastSetImage from "@/assets/images/breakfast-set.jpg";
+import CinnamonRollImage from "@/assets/images/cinnamon-roll.jpg";
 
 // 菜单分类
 type MenuCategory = "coffee" | "tea" | "dessert" | "food";
@@ -13,7 +33,7 @@ interface MenuItem {
   name: string;
   description: string;
   price: string;
-  image: string;
+  image: StaticImageData;
   category: MenuCategory;
   tags?: string[];
 }
@@ -29,7 +49,7 @@ export default function MenuPage() {
       name: "意式浓缩",
       description: "浓郁的意式浓缩咖啡，纯粹的咖啡体验",
       price: "¥28",
-      image: "/espresso.jpg",
+      image: EspressoImage,
       category: "coffee",
       tags: ["经典", "热门"],
     },
@@ -38,7 +58,7 @@ export default function MenuPage() {
       name: "美式咖啡",
       description: "意式浓缩与纯净水的完美结合，带来醇和的口感",
       price: "¥30",
-      image: "/americano.jpg",
+      image: AmericanoImage,
       category: "coffee",
     },
     {
@@ -46,7 +66,7 @@ export default function MenuPage() {
       name: "拿铁",
       description: "丝滑浓郁的意式浓缩与蒸汽牛奶的完美结合",
       price: "¥32",
-      image: "/latte.jpg",
+      image: LatteImage,
       category: "coffee",
       tags: ["热门"],
     },
@@ -55,7 +75,7 @@ export default function MenuPage() {
       name: "卡布奇诺",
       description: "经典意式咖啡，浓缩咖啡、蒸汽牛奶和奶泡的黄金比例",
       price: "¥32",
-      image: "/cappuccino.jpg",
+      image: CappuccinoImage,
       category: "coffee",
     },
     {
@@ -63,7 +83,7 @@ export default function MenuPage() {
       name: "摩卡",
       description: "浓郁的巧克力与咖啡的经典搭配",
       price: "¥36",
-      image: "/mocha.jpg",
+      image: MochaImage,
       category: "coffee",
     },
     {
@@ -71,7 +91,7 @@ export default function MenuPage() {
       name: "焦糖玛奇朵",
       description: "香浓的焦糖风味与拿铁的完美融合",
       price: "¥36",
-      image: "/caramel-macchiato.jpg",
+      image: CaramelMacchiatoImage,
       category: "coffee",
       tags: ["热门"],
     },
@@ -80,7 +100,7 @@ export default function MenuPage() {
       name: "冰滴咖啡",
       description: "12小时慢滴工艺，带来清爽顺滑的口感",
       price: "¥38",
-      image: "/cold-brew.jpg",
+      image: ColdBrewImage,
       category: "coffee",
       tags: ["特色"],
     },
@@ -89,7 +109,7 @@ export default function MenuPage() {
       name: "手冲咖啡",
       description: "单一产区精品咖啡豆，手工冲泡，展现咖啡的多层次风味",
       price: "¥42",
-      image: "/pour-over.jpg",
+      image: PourOverImage,
       category: "coffee",
       tags: ["特色"],
     },
@@ -100,7 +120,7 @@ export default function MenuPage() {
       name: "伯爵红茶",
       description: "经典英式红茶，带有佛手柑的独特香气",
       price: "¥28",
-      image: "/earl-grey.jpg",
+      image: EarlGreyImage,
       category: "tea",
     },
     {
@@ -108,7 +128,7 @@ export default function MenuPage() {
       name: "茉莉花茶",
       description: "优质绿茶与茉莉花窨制，清香怡人",
       price: "¥28",
-      image: "/jasmine-tea.jpg",
+      image: JasmineTeaImage,
       category: "tea",
     },
     {
@@ -116,7 +136,7 @@ export default function MenuPage() {
       name: "抹茶拿铁",
       description: "优质抹茶粉与蒸汽牛奶的完美结合",
       price: "¥34",
-      image: "/matcha-latte.jpg",
+      image: MatchaLatteImage,
       category: "tea",
       tags: ["热门"],
     },
@@ -125,7 +145,7 @@ export default function MenuPage() {
       name: "水果茶",
       description: "新鲜水果与花草茶的清爽组合",
       price: "¥36",
-      image: "/fruit-tea.jpg",
+      image: FruitTeaImage,
       category: "tea",
     },
 
@@ -135,7 +155,7 @@ export default function MenuPage() {
       name: "提拉米苏",
       description: "经典意式甜点，咖啡与马斯卡彭奶酪的浪漫邂逅",
       price: "¥38",
-      image: "/tiramisu.jpg",
+      image: TiramisuImage,
       category: "dessert",
       tags: ["热门"],
     },
@@ -144,7 +164,7 @@ export default function MenuPage() {
       name: "纽约芝士蛋糕",
       description: "浓郁顺滑的奶油芝士，搭配酥脆饼底",
       price: "¥36",
-      image: "/cheesecake.jpg",
+      image: CheesecakeImage,
       category: "dessert",
     },
     {
@@ -152,7 +172,7 @@ export default function MenuPage() {
       name: "巧克力布朗尼",
       description: "浓郁的巧克力风味，外酥内软",
       price: "¥32",
-      image: "/brownie.jpg",
+      image: BrownieImage,
       category: "dessert",
     },
     {
@@ -160,7 +180,7 @@ export default function MenuPage() {
       name: "肉桂卷",
       description: "手工制作，香甜松软，搭配咖啡的绝佳选择",
       price: "¥28",
-      image: "/cinnamon-roll.jpg",
+      image: CinnamonRollImage,
       category: "dessert",
       tags: ["特色"],
     },
@@ -171,7 +191,7 @@ export default function MenuPage() {
       name: "鳄梨吐司",
       description: "新鲜鳄梨、有机鸡蛋和全麦吐司的健康组合",
       price: "¥42",
-      image: "/avocado-toast.jpg",
+      image: AvocadoToastImage,
       category: "food",
       tags: ["热门"],
     },
@@ -180,7 +200,7 @@ export default function MenuPage() {
       name: "三明治",
       description: "新鲜蔬菜、优质蛋白与自制酱料，营养美味",
       price: "¥38",
-      image: "/sandwich.jpg",
+      image: SandwichImage,
       category: "food",
     },
     {
@@ -188,7 +208,7 @@ export default function MenuPage() {
       name: "沙拉碗",
       description: "时令蔬果、藜麦、坚果的营养搭配",
       price: "¥46",
-      image: "/salad-bowl.jpg",
+      image: SaladBowlImage,
       category: "food",
     },
     {
@@ -196,7 +216,7 @@ export default function MenuPage() {
       name: "早餐套餐",
       description: "包含咖啡、三明治和水果的完美早餐",
       price: "¥58",
-      image: "/breakfast-set.jpg",
+      image: BreakfastSetImage,
       category: "food",
       tags: ["特色"],
     },
@@ -275,7 +295,7 @@ export default function MenuPage() {
             >
               <div className="relative h-56">
                 <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                <OptimizedImage
+                <Image
                   src={item.image}
                   alt={item.name}
                   fill
