@@ -15,5 +15,5 @@ export default function OptimizedImage({ src, ...props }: OptimizedImageProps) {
   // 使用getImageUrl处理图片路径
   const optimizedSrc = getImageUrl(src);
 
-  return <Image src={optimizedSrc} {...props} />;
+  return <Image src={optimizedSrc} {...props} alt={props.alt || ""} />;
 }

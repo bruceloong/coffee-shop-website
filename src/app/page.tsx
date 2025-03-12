@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import OptimizedImage from "@/components/OptimizedImage";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getImageUrl } from "@/utils/imageUtils";
@@ -92,8 +92,8 @@ export default function Home() {
       >
         <div className="hero-image absolute inset-0 z-0">
           <div className="absolute inset-0 bg-black/40 z-10" />
-          <Image
-            src={getImageUrl("/hero-bg.jpg")}
+          <OptimizedImage
+            src="/hero-bg.jpg"
             alt="咖啡店内景"
             fill
             priority
@@ -203,7 +203,7 @@ export default function Home() {
               >
                 <div className="relative h-48">
                   <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                  <Image
+                  <OptimizedImage
                     src={product.image}
                     alt={product.name}
                     fill
@@ -269,7 +269,7 @@ export default function Home() {
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="about-image relative h-[400px] rounded-lg overflow-hidden">
-              <Image
+              <OptimizedImage
                 src={getImageUrl("/about-image.jpg")}
                 alt="我们的咖啡店"
                 fill

@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getImageUrl } from "@/utils/imageUtils";
+import OptimizedImage from "@/components/OptimizedImage";
 
 export default function AboutPage() {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -137,7 +137,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="order-1 md:order-2 relative h-[400px] rounded-lg overflow-hidden"
             >
-              <Image
+              <OptimizedImage
                 src={getImageUrl("/story-image.jpg")}
                 alt="我们的咖啡店故事"
                 fill
@@ -347,7 +347,7 @@ export default function AboutPage() {
                 className="bg-white dark:bg-[#1a1a1a] rounded-lg overflow-hidden shadow-md"
               >
                 <div className="relative h-64">
-                  <Image
+                  <OptimizedImage
                     src={member.image}
                     alt={member.name}
                     fill
@@ -383,7 +383,7 @@ export default function AboutPage() {
               </div>
 
               <div className="relative h-64 md:h-full rounded-lg overflow-hidden">
-                <Image
+                <OptimizedImage
                   src={getImageUrl("/join-team.jpg")}
                   alt="加入我们的团队"
                   fill
