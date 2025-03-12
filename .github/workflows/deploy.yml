@@ -35,7 +35,26 @@ jobs:
         run: |
           echo "Building for GitHub Pages..."
           echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
-          echo "GITHUB_SERVER_URL: $GITHUB_SERVER_URL"
+          REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d '/' -f 2)
+          echo "REPO_NAME: $REPO_NAME"
+
+          # 创建适用于 GitHub Pages 的 Next.js 配置
+          cat > next.config.ts << EOL
+          import type { NextConfig } from "next";
+
+          const nextConfig: NextConfig = {
+            output: 'export',
+            basePath: '/${REPO_NAME}',
+            assetPrefix: '/${REPO_NAME}/',
+            images: {
+              unoptimized: true,
+            },
+          };
+
+          export default nextConfig;
+          EOL
+
+          cat next.config.ts
 
       - name: Build
         run: pnpm build
