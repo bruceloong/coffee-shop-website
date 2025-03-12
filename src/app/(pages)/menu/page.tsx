@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Image, { StaticImageData } from "next/image";
+import { useCart } from "@/context/CartContext";
 import EspressoImage from "@/assets/images/espresso.jpg";
 import AmericanoImage from "@/assets/images/americano.jpg";
 import LatteImage from "@/assets/images/latte.jpg";
@@ -40,6 +41,24 @@ interface MenuItem {
 
 export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState<MenuCategory>("coffee");
+  const { addToCart } = useCart();
+  const [addedItems, setAddedItems] = useState<Record<number, boolean>>({});
+
+  // 处理添加到购物车
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+    });
+
+    // 显示添加成功动画
+    setAddedItems((prev) => ({ ...prev, [item.id]: true }));
+    setTimeout(() => {
+      setAddedItems((prev) => ({ ...prev, [item.id]: false }));
+    }, 1500);
+  };
 
   // 菜单数据
   const menuItems: MenuItem[] = [
@@ -332,8 +351,36 @@ export default function MenuPage() {
                 <p className="text-[var(--foreground)]/70 text-sm mb-4">
                   {item.description}
                 </p>
-                <button className="w-full py-2 bg-[var(--primary)] text-white rounded hover:bg-[var(--primary-dark)] transition-colors duration-300">
-                  加入购物车
+                <button
+                  className={`w-full py-2 rounded transition-colors duration-300 relative overflow-hidden ${
+                    addedItems[item.id]
+                      ? "bg-green-500 text-white"
+                      : "bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)]"
+                  }`}
+                  onClick={() => handleAddToCart(item)}
+                  disabled={addedItems[item.id]}
+                >
+                  {addedItems[item.id] ? (
+                    <>
+                      <span className="flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-1"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        已添加
+                      </span>
+                    </>
+                  ) : (
+                    "加入购物车"
+                  )}
                 </button>
               </div>
             </motion.div>
