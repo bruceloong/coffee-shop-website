@@ -38,8 +38,30 @@ jobs:
           REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d '/' -f 2)
           echo "REPO_NAME: $REPO_NAME"
 
-          # 创建适用于 GitHub Pages 的 Next.js 配置
-          cat > next.config.ts << EOL
+          # 检查是否存在自定义域名文件
+          if [ -f "public/CNAME" ]; then
+            echo "检测到自定义域名配置"
+            CUSTOM_DOMAIN=$(cat public/CNAME)
+            echo "自定义域名: $CUSTOM_DOMAIN"
+            
+            # 为自定义域名创建 Next.js 配置
+            cat > next.config.ts << EOL
+          import type { NextConfig } from "next";
+
+          const nextConfig: NextConfig = {
+            output: 'export',
+            // 使用自定义域名时不需要 basePath 和 assetPrefix
+            images: {
+              unoptimized: true,
+            },
+          };
+
+          export default nextConfig;
+          EOL
+          else
+            echo "使用 GitHub Pages 默认域名"
+            # 创建适用于 GitHub Pages 的 Next.js 配置
+            cat > next.config.ts << EOL
           import type { NextConfig } from "next";
 
           const nextConfig: NextConfig = {
@@ -53,6 +75,7 @@ jobs:
 
           export default nextConfig;
           EOL
+          fi
 
           cat next.config.ts
 
@@ -62,6 +85,11 @@ jobs:
       - name: Add .nojekyll file
         run: |
           touch out/.nojekyll
+          # 如果存在 CNAME 文件，复制到 out 目录
+          if [ -f "public/CNAME" ]; then
+            cp public/CNAME out/
+            echo "已复制 CNAME 文件到 out 目录"
+          fi
           echo "Contents of out directory:"
           ls -la out/
 
