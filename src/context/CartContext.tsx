@@ -8,25 +8,37 @@ import {
   ReactNode,
 } from "react";
 import { StaticImageData } from "next/image";
+import { orderAPI } from "@/services/api";
+import { toast } from "react-hot-toast";
 
 // 购物车商品接口
 export interface CartItem {
-  id: number;
+  id: string; // 修改为字符串类型，与MongoDB的_id匹配
   name: string;
-  price: string;
-  image: StaticImageData;
+  price: number; // 修改为数字类型，与后端匹配
+  image: string | StaticImageData; // 支持字符串URL或StaticImageData
   quantity: number;
+  category?: string;
 }
 
 // 购物车上下文接口
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: Omit<CartItem, "quantity">) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  checkout: (contactInfo: ContactInfo) => Promise<any>;
+  isLoading: boolean;
   totalItems: number;
   totalPrice: number;
+}
+
+// 联系信息接口
+interface ContactInfo {
+  name: string;
+  phone: string;
+  address?: string;
 }
 
 // 创建上下文
@@ -37,26 +49,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 从本地存储加载购物车数据
   useEffect(() => {
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      try {
-        const parsedCart = JSON.parse(storedCart);
-        // 由于图片对象无法序列化，这里需要特殊处理
-        // 实际项目中可能需要存储图片路径而非对象
-        setCartItems(parsedCart);
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error);
+    if (typeof window !== "undefined") {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        try {
+          const parsedCart = JSON.parse(storedCart);
+          setCartItems(parsedCart);
+        } catch (error) {
+          console.error("Failed to parse cart from localStorage:", error);
+        }
       }
     }
   }, []);
 
   // 保存购物车数据到本地存储
   useEffect(() => {
-    if (cartItems.length > 0) {
-      // 注意：这里的图片对象无法正确序列化，实际项目中需要特殊处理
+    if (cartItems.length > 0 && typeof window !== "undefined") {
       localStorage.setItem("cart", JSON.stringify(cartItems));
     }
   }, [cartItems]);
@@ -70,8 +82,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setTotalItems(itemCount);
 
     const price = cartItems.reduce((total, item) => {
-      // 移除价格中的货币符号并转换为数字
-      const priceValue = parseFloat(item.price.replace(/[^\d.]/g, ""));
+      // 如果价格是字符串，转换为数字
+      const priceValue =
+        typeof item.price === "string"
+          ? parseFloat(item.price.replace(/[^\d.]/g, ""))
+          : item.price;
       return total + priceValue * item.quantity;
     }, 0);
     setTotalPrice(price);
@@ -91,15 +106,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return [...prevItems, { ...item, quantity: 1 }];
       }
     });
+
+    // 显示添加成功提示
+    toast.success(`已添加 ${item.name} 到购物车`);
   };
 
   // 从购物车移除商品
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
   // 更新商品数量
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -113,7 +131,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // 清空购物车
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem("cart");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cart");
+    }
+  };
+
+  // 结账功能
+  const checkout = async (contactInfo: ContactInfo) => {
+    setIsLoading(true);
+    try {
+      // 准备订单数据
+      const orderData = {
+        items: cartItems.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+        paymentMethod: "alipay", // 默认支付方式，可以根据需要修改
+        contactInfo,
+        note: "",
+      };
+
+      // 调用API创建订单
+      const result = await orderAPI.createOrder(orderData);
+
+      // 成功后清空购物车
+      clearCart();
+
+      // 显示成功消息
+      toast.success("订单创建成功！");
+
+      setIsLoading(false);
+      return result;
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast.error(error.response?.data?.message || "结账失败，请重试");
+      setIsLoading(false);
+      throw error;
+    }
   };
 
   return (
@@ -124,6 +178,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        checkout,
+        isLoading,
         totalItems,
         totalPrice,
       }}

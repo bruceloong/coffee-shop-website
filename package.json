@@ -18,12 +18,16 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@types/js-cookie": "^3.0.6",
+    "axios": "^1.6.7",
     "framer-motion": "^12.4.11",
     "gsap": "^3.12.7",
+    "js-cookie": "^3.0.5",
     "next": "15.2.1",
     "next-intl": "^3.26.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

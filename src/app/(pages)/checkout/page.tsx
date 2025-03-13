@@ -1,492 +1,285 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-
-// 支付方式类型
-type PaymentMethod = "alipay" | "wechat";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, totalPrice, clearCart } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("alipay");
-  const [orderNumber, setOrderNumber] = useState("");
-  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const { cartItems, totalPrice, checkout, clearCart, isLoading } = useCart();
+
   const [contactInfo, setContactInfo] = useState({
     name: "",
     phone: "",
     address: "",
   });
 
-  // 生成随机订单号
-  useEffect(() => {
-    const generateOrderNumber = () => {
-      const timestamp = new Date().getTime();
-      const random = Math.floor(Math.random() * 1000);
-      return `BH${timestamp}${random}`;
-    };
-
-    setOrderNumber(generateOrderNumber());
-  }, []);
+  const [paymentMethod, setPaymentMethod] = useState("alipay");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 如果购物车为空，重定向到购物车页面
-  useEffect(() => {
-    if (cartItems.length === 0 && !showSuccess) {
-      router.push("/cart");
-    }
-  }, [cartItems, router, showSuccess]);
+  if (cartItems.length === 0 && typeof window !== "undefined") {
+    router.push("/cart");
+    return null;
+  }
 
-  // 处理表单输入变化
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 处理输入变化
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setContactInfo((prev) => ({ ...prev, [name]: value }));
+
+    // 清除错误
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
-  // 处理支付方式选择
-  const handlePaymentMethodChange = (method: PaymentMethod) => {
-    setPaymentMethod(method);
+  // 表单验证
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!contactInfo.name.trim()) {
+      newErrors.name = "请输入您的姓名";
+    }
+
+    if (!contactInfo.phone.trim()) {
+      newErrors.phone = "请输入您的电话号码";
+    } else if (!/^1[3-9]\d{9}$/.test(contactInfo.phone)) {
+      newErrors.phone = "请输入有效的手机号码";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // 生成支付二维码
-  const handleGenerateQRCode = (e: React.FormEvent) => {
+  // 提交订单
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 验证表单
-    if (!contactInfo.name || !contactInfo.phone) {
-      alert("请填写姓名和电话");
+    if (!validateForm()) {
       return;
     }
 
-    setIsGeneratingQR(true);
+    try {
+      const result = await checkout(contactInfo);
 
-    // 模拟生成二维码的过程
-    setTimeout(() => {
-      setIsGeneratingQR(false);
-      setShowQRCode(true);
-    }, 1500);
+      // 跳转到支付页面
+      router.push(
+        `/payment?orderId=${result.data.order._id}&method=${paymentMethod}`
+      );
+    } catch (error) {
+      console.error("Checkout error:", error);
+    }
   };
-
-  // 模拟支付完成
-  const handlePaymentComplete = () => {
-    setShowQRCode(false);
-    setShowSuccess(true);
-    clearCart(); // 清空购物车
-  };
-
-  // 渲染支付成功页面
-  if (showSuccess) {
-    return (
-      <div className="pt-24 pb-16">
-        <div className="container-custom">
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-8 text-center">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 text-green-600 dark:text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold mb-4">支付成功！</h1>
-            <p className="text-[var(--foreground)]/70 mb-2">
-              您的订单 #{orderNumber} 已支付成功
-            </p>
-            <p className="text-[var(--foreground)]/70 mb-8">
-              我们将尽快为您准备订单，感谢您的惠顾！
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/"
-                className="px-6 py-3 bg-[var(--secondary)]/20 hover:bg-[var(--secondary)]/40 rounded-md transition-colors duration-300"
-              >
-                返回首页
-              </Link>
-              <Link
-                href="/menu"
-                className="px-6 py-3 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--primary-dark)] transition-colors duration-300"
-              >
-                继续购物
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="pt-24 pb-16">
-      {/* 页面标题 */}
-      <div className="bg-[var(--primary)] text-white py-16">
-        <div className="container-custom text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl md:text-5xl font-bold mb-4"
-          >
-            结算
-          </motion.h1>
-          <motion.div
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "80px" }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="h-1 bg-white mx-auto mb-6"
-          />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="max-w-2xl mx-auto text-white/90"
-          >
-            完成您的订单并进行支付
-          </motion.p>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-center mb-8">结账</h1>
 
-      <div className="container-custom mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 结算表单 */}
-          <div className="lg:col-span-2">
-            {showQRCode ? (
-              <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-8">
-                <h2 className="text-xl font-semibold mb-6">请扫码支付</h2>
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-4 rounded-lg mb-6">
-                    {/* 根据支付方式显示不同的二维码 */}
-                    {paymentMethod === "alipay" ? (
-                      <div className="relative w-64 h-64">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 100 100"
-                            className="w-full h-full text-blue-500"
-                          >
-                            {/* 模拟支付宝二维码 */}
-                            <rect
-                              x="0"
-                              y="0"
-                              width="100"
-                              height="100"
-                              fill="white"
-                            />
-                            <path
-                              d="M10,10 L90,10 L90,90 L10,90 Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="5"
-                            />
-                            <path
-                              d="M30,30 L70,30 L70,70 L30,70 Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="5"
-                            />
-                            <circle
-                              cx="50"
-                              cy="50"
-                              r="10"
-                              fill="currentColor"
-                            />
-                            <text
-                              x="50"
-                              y="95"
-                              textAnchor="middle"
-                              fill="currentColor"
-                              fontSize="8"
-                            >
-                              支付宝
-                            </text>
-                          </svg>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative w-64 h-64">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 100 100"
-                            className="w-full h-full text-green-500"
-                          >
-                            {/* 模拟微信支付二维码 */}
-                            <rect
-                              x="0"
-                              y="0"
-                              width="100"
-                              height="100"
-                              fill="white"
-                            />
-                            <path
-                              d="M10,10 L90,10 L90,90 L10,90 Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="5"
-                            />
-                            <path
-                              d="M25,25 L75,25 L75,75 L25,75 Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="5"
-                            />
-                            <path
-                              d="M40,40 L60,40 L60,60 L40,60 Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="5"
-                            />
-                            <text
-                              x="50"
-                              y="95"
-                              textAnchor="middle"
-                              fill="currentColor"
-                              fontSize="8"
-                            >
-                              微信支付
-                            </text>
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-center mb-2">
-                    请使用
-                    <span className="font-semibold">
-                      {paymentMethod === "alipay" ? "支付宝" : "微信"}
-                    </span>
-                    扫描二维码完成支付
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* 订单摘要 */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">订单摘要</h2>
+
+            {cartItems.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center py-4 border-b"
+              >
+                <div className="relative h-16 w-16 rounded-md overflow-hidden">
+                  <Image
+                    src={
+                      typeof item.image === "string"
+                        ? item.image
+                        : item.image.src
+                    }
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="ml-4 flex-grow">
+                  <h3 className="font-medium">{item.name}</h3>
+                  <p className="text-gray-500 text-sm">数量: {item.quantity}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">
+                    ¥{(item.price * item.quantity).toFixed(2)}
                   </p>
-                  <p className="text-[var(--foreground)]/70 text-sm mb-6">
-                    订单号: {orderNumber}
-                  </p>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => setShowQRCode(false)}
-                      className="px-6 py-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
-                    >
-                      返回
-                    </button>
-                    <button
-                      onClick={handlePaymentComplete}
-                      className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-300"
-                    >
-                      模拟支付完成
-                    </button>
-                  </div>
                 </div>
+              </motion.div>
+            ))}
+
+            <div className="mt-6 pt-4 border-t">
+              <div className="flex justify-between mb-2">
+                <span>小计</span>
+                <span>¥{totalPrice.toFixed(2)}</span>
               </div>
-            ) : (
-              <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-8">
-                <h2 className="text-xl font-semibold mb-6">联系信息</h2>
-                <form onSubmit={handleGenerateQRCode}>
-                  <div className="space-y-6">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-medium mb-2"
-                      >
-                        姓名 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={contactInfo.name}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] dark:bg-[#2a2a2a]"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium mb-2"
-                      >
-                        电话 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={contactInfo.phone}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] dark:bg-[#2a2a2a]"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="address"
-                        className="block text-sm font-medium mb-2"
-                      >
-                        地址（可选）
-                      </label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={contactInfo.address}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] dark:bg-[#2a2a2a]"
-                      />
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">支付方式</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div
-                          className={`border rounded-md p-4 cursor-pointer transition-all duration-300 ${
-                            paymentMethod === "alipay"
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                              : "border-gray-300 dark:border-gray-700"
-                          }`}
-                          onClick={() => handlePaymentMethodChange("alipay")}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 rounded-full border-2 border-blue-500 flex items-center justify-center mr-3">
-                              {paymentMethod === "alipay" && (
-                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                              )}
-                            </div>
-                            <span className="font-medium">支付宝</span>
-                          </div>
-                        </div>
-                        <div
-                          className={`border rounded-md p-4 cursor-pointer transition-all duration-300 ${
-                            paymentMethod === "wechat"
-                              ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                              : "border-gray-300 dark:border-gray-700"
-                          }`}
-                          onClick={() => handlePaymentMethodChange("wechat")}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 rounded-full border-2 border-green-500 flex items-center justify-center mr-3">
-                              {paymentMethod === "wechat" && (
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                              )}
-                            </div>
-                            <span className="font-medium">微信支付</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isGeneratingQR}
-                      className={`w-full py-3 rounded-md font-medium transition-colors duration-300 ${
-                        isGeneratingQR
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)]"
-                      }`}
-                    >
-                      {isGeneratingQR ? (
-                        <span className="flex items-center justify-center">
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          生成支付二维码...
-                        </span>
-                      ) : (
-                        "生成支付二维码"
-                      )}
-                    </button>
-                  </div>
-                </form>
+              <div className="flex justify-between mb-2">
+                <span>配送费</span>
+                <span>¥0.00</span>
               </div>
-            )}
-          </div>
-
-          {/* 订单摘要 */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-xl font-semibold mb-6">订单摘要</h2>
-
-              <div className="max-h-60 overflow-y-auto mb-6">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 mb-4">
-                    <div className="relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-[var(--foreground)]/70">
-                          {item.quantity} x {item.price}
-                        </span>
-                        <span className="text-sm font-medium">
-                          ¥
-                          {(
-                            parseFloat(item.price.replace(/[^\d.]/g, "")) *
-                            item.quantity
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-[var(--foreground)]/70">商品总价</span>
-                  <span>¥{totalPrice.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--foreground)]/70">配送费</span>
-                  <span>¥0.00</span>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between font-semibold">
-                  <span>总计</span>
-                  <span className="text-[var(--primary)]">
-                    ¥{totalPrice.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-[var(--secondary)]/10 p-4 rounded-md">
-                <p className="text-sm">
-                  <span className="font-medium">订单号：</span>
-                  {orderNumber}
-                </p>
+              <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t">
+                <span>总计</span>
+                <span>¥{totalPrice.toFixed(2)}</span>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 联系信息和支付方式 */}
+        <div className="lg:col-span-1">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
+            <h2 className="text-xl font-semibold mb-4">联系信息</h2>
+
+            <div className="mb-4">
+              <label htmlFor="name" className="block text-gray-700 mb-2">
+                姓名 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={contactInfo.name}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md ${
+                  errors.name ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="请输入您的姓名"
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="phone" className="block text-gray-700 mb-2">
+                电话 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={contactInfo.phone}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md ${
+                  errors.phone ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="请输入您的电话号码"
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="address" className="block text-gray-700 mb-2">
+                地址
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                value={contactInfo.address}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                rows={3}
+                placeholder="请输入您的地址（可选）"
+              />
+            </div>
+
+            <h2 className="text-xl font-semibold mb-4">支付方式</h2>
+
+            <div className="mb-6">
+              <div className="flex items-center mb-3">
+                <input
+                  type="radio"
+                  id="alipay"
+                  name="paymentMethod"
+                  value="alipay"
+                  checked={paymentMethod === "alipay"}
+                  onChange={() => setPaymentMethod("alipay")}
+                  className="mr-2"
+                />
+                <label htmlFor="alipay" className="flex items-center">
+                  <span className="mr-2">支付宝</span>
+                  <svg
+                    className="w-6 h-6 text-blue-500"
+                    viewBox="0 0 1024 1024"
+                    fill="currentColor"
+                  >
+                    <path d="M230.4 576.512c-12.288 9.728-25.088 24.064-28.672 41.984-5.12 24.576-1.024 55.296 22.528 79.872 28.672 29.184 72.704 37.376 96.768 38.4 60.416 2.56 113.664-30.72 149.504-65.536 19.456-18.944 35.328-40.96 49.152-64.512-113.664-58.88-195.072-91.648-239.104-91.648-20.48-0.512-36.864 6.144-50.176 11.264v0.512z" />
+                    <path
+                      d="M957.44 264.192c0-8.192-1.024-15.872-2.56-23.552 0-1.024 0-2.56-0.512-3.584 0-0.512 0-1.536-0.512-2.048-1.536-7.68-4.096-15.36-6.656-22.528-0.512-1.024-0.512-2.56-1.024-3.584-3.072-7.168-6.656-14.336-10.752-21.504-0.512-0.512-1.024-1.536-1.536-2.048-4.096-6.656-8.704-13.312-13.824-19.456-0.512-0.512-1.024-1.536-2.048-2.048-5.12-6.144-10.752-12.288-16.896-17.92-0.512-0.512-1.536-1.536-2.048-2.048-6.144-5.632-12.8-10.752-19.968-15.872-0.512-0.512-1.536-1.024-2.048-1.536-7.168-4.608-14.336-9.216-22.016-13.312-1.024-0.512-2.048-1.024-3.072-1.536-7.68-3.584-15.36-7.168-23.552-9.728-1.024-0.512-2.56-0.512-3.584-1.024-8.192-2.56-16.384-4.608-24.576-6.144-1.024 0-2.56-0.512-3.584-0.512-8.704-1.536-17.92-2.048-26.624-2.048H189.44c-8.704 0-17.408 0.512-26.112 2.048-1.024 0-2.56 0.512-3.584 0.512-8.192 1.536-16.384 3.584-24.576 6.144-1.024 0.512-2.56 0.512-3.584 1.024-8.192 2.56-15.872 6.144-23.552 9.728-1.024 0.512-2.048 1.024-3.072 1.536-7.68 4.096-14.848 8.704-22.016 13.312-0.512 0.512-1.536 1.024-2.048 1.536-7.168 5.12-13.824 10.24-19.968 15.872-0.512 0.512-1.536 1.536-2.048 2.048-6.144 5.632-11.776 11.776-16.896 17.92-0.512 0.512-1.024 1.536-2.048 2.048-5.12 6.144-9.728 12.8-13.824 19.456-0.512 0.512-1.024 1.536-1.536 2.048-4.096 7.168-7.68 14.336-10.752 21.504-0.512 1.024-0.512 2.56-1.024 3.584-2.56 7.168-5.12 14.848-6.656 22.528 0 0.512 0 1.536-0.512 2.048 0 1.024 0 2.56-0.512 3.584-1.536 7.68-2.56 15.36-2.56 23.552v495.616c0 8.192 1.024 15.872 2.56 23.552 0 1.024 0 2.56 0.512 3.584 0 0.512 0 1.536 0.512 2.048 1.536 7.68 4.096 15.36 6.656 22.528 0.512 1.024 0.512 2.56 1.024 3.584 3.072 7.168 6.656 14.336 10.752 21.504 0.512 0.512 1.024 1.536 1.536 2.048 4.096 6.656 8.704 13.312 13.824 19.456 0.512 0.512 1.024 1.536 2.048 2.048 5.12 6.144 10.752 12.288 16.896 17.92 0.512 0.512 1.536 1.536 2.048 2.048 6.144 5.632 12.8 10.752 19.968 15.872 0.512 0.512 1.536 1.536 2.048 2.048 6.144 5.632 12.8 10.752 19.968 15.872 0.512 0.512 1.536 1.536 2.048 2.048 6.144 5.632 12.8 10.752 19.968 15.872 0.512 0.512 1.536 1.024 2.048 1.536 7.168 4.608 14.336 9.216 22.016 13.312 1.024 0.512 2.048 1.024 3.072 1.536 7.68 3.584 15.36 7.168 23.552 9.728 1.024 0.512 2.56 0.512 3.584 1.024 8.192 2.56 16.384 4.608 24.576 6.144 1.024 0 2.56 0.512 3.584 0.512 8.704 1.536 17.408 2.048 26.112 2.048h645.12c8.704 0 17.92-0.512 26.624-2.048 1.024 0 2.56-0.512 3.584-0.512 8.192-1.536 16.384-3.584 24.576-6.144 1.024-0.512 2.56-0.512 3.584-1.024 8.192-2.56 15.872-6.144 23.552-9.728 1.024-0.512 2.048-1.024 3.072-1.536 7.68-4.096 14.848-8.704 22.016-13.312 0.512-0.512 1.536-1.024 2.048-1.536 7.168-5.12 13.824-10.24 19.968-15.872 0.512-0.512 1.536-1.536 2.048-2.048 6.144-5.632 11.776-11.776 16.896-17.92 0.512-0.512 1.024-1.536 2.048-2.048 5.12-6.144 9.728-12.8 13.824-19.456 0.512-0.512 1.024-1.536 1.536-2.048 4.096-7.168 7.68-14.336 10.752-21.504 0.512-1.024 0.512-2.56 1.024-3.584 2.56-7.168 5.12-14.848 6.656-22.528 0-0.512 0-1.536 0.512-2.048 0-1.024 0 -2.56 0.512-3.584 1.536-7.68 2.56-15.36 2.56-23.552V264.192z"
+                      fill="#06B4FD"
+                    />
+                    <path
+                      d="M683.008 576c-76.8-25.088-174.08-60.416-174.08-60.416v-99.328h-187.904v109.568c-38.4 29.696-62.976 74.752-62.976 125.44 0 88.576 71.68 160.256 160.256 160.256 65.024 0 120.832-38.912 146.432-94.72 88.576 44.544 152.576 74.24 152.576 74.24-28.16 130.56-144.384 228.864-285.696 228.864-160.256 0-290.304-129.536-290.304-290.304 0-129.024 84.48-238.08 200.704-276.48V335.872h187.904v-45.568h-187.904v-79.872h187.904v-58.88h99.328v58.88h187.904v79.872h-187.904v45.568h187.904v117.76c-33.28-1.024-67.072 10.752-95.232 33.792-29.696 24.064-50.688 58.368-58.88 97.28 0.512 0 7.168 1.536 7.168 1.536z"
+                      fill="#FFFFFF"
+                    />
+                  </svg>
+                </label>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="wechat"
+                  name="paymentMethod"
+                  value="wechat"
+                  checked={paymentMethod === "wechat"}
+                  onChange={() => setPaymentMethod("wechat")}
+                  className="mr-2"
+                />
+                <label htmlFor="wechat" className="flex items-center">
+                  <span className="mr-2">微信支付</span>
+                  <svg
+                    className="w-6 h-6 text-green-500"
+                    viewBox="0 0 1024 1024"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M692.992 347.968c4.48 0 8.96 0.128 13.376 0.32-26.816-125.44-161.024-218.688-218.688-171.136 0-312.32 116.48-312.32 265.344 0 85.312 46.784 155.648 124.672 210.112l-31.168 93.504 108.992-54.592c39.04 7.68 70.4 15.744 108.8 15.744 9.728 0 19.392-0.448 28.992-1.216-6.08-20.736-9.536-42.56-9.536-65.152 0-135.584 116.48-245.376 282.176-245.376z m-178.304-90.112c23.488 0 39.04 15.488 39.04 39.04 0 23.488-15.552 39.04-39.04 39.04-23.488 0-46.976-15.552-46.976-39.04 0-23.552 23.488-39.04 46.976-39.04z m-233.024 78.08c-23.488 0-47.04-15.552-47.04-39.04 0-23.488 23.552-39.04 47.04-39.04 23.488 0 39.04 15.552 39.04 39.04 0 23.488-15.552 39.04-39.04 39.04z"
+                      fill="#3CAF34"
+                    />
+                    <path
+                      d="M957.056 618.112c0-124.8-124.672-226.56-265.344-226.56-148.672 0-265.344 101.76-265.344 226.56 0 124.928 116.672 226.56 265.344 226.56 31.104 0 62.336-7.808 93.44-15.552l85.44 46.912-23.488-77.952c62.4-46.912 109.952-108.864 109.952-179.968z m-350.784-39.04c-15.552 0-31.168-15.552-31.168-31.168 0-15.552 15.616-31.168 31.168-31.168 23.552 0 39.04 15.616 39.04 31.168 0 15.616-15.488 31.168-39.04 31.168z m171.136 0c-15.488 0-31.104-15.552-31.104-31.168 0-15.552 15.616-31.168 31.104-31.168 23.488 0 39.04 15.616 39.04 31.168 0 15.616-15.552 31.168-39.04 31.168z"
+                      fill="#3CAF34"
+                    />
+                  </svg>
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-primary text-white py-3 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <div className="flex justify-center items-center">
+                  <LoadingSpinner size="small" color="#ffffff" />
+                  <span className="ml-2">处理中...</span>
+                </div>
+              ) : (
+                "提交订单"
+              )}
+            </button>
+          </form>
         </div>
       </div>
     </div>

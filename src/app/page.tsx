@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import AboutImage from "@/assets/images/about-image.jpg";
@@ -12,10 +12,18 @@ import MochaImage from "@/assets/images/mocha.jpg";
 import CinnamonRollImage from "@/assets/images/cinnamon-roll.jpg";
 import ColdBrewImage from "@/assets/images/cold-brew.jpg";
 import Image from "next/image";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { productApi } from "@/lib/api/productApi";
+import { Product } from "@/lib/api/productApi";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
+  const { user, isAuthenticated } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [healthStatus, setHealthStatus] = useState<string | null>(null);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -55,6 +63,46 @@ export default function Home() {
         },
       });
     }
+  }, []);
+
+  // 检查后端健康状态
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/health`
+        );
+        const data = await response.json();
+        setHealthStatus(data.status === "success" ? "正常" : "异常");
+      } catch (err) {
+        console.error("健康检查失败:", err);
+        setHealthStatus("无法连接");
+      }
+    };
+
+    checkHealth();
+  }, []);
+
+  // 获取产品列表
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productApi.getAllProducts({
+          featured: true,
+          limit: 6,
+        });
+        setProducts(response.products);
+        setError(null);
+      } catch (err: any) {
+        console.error("获取产品失败:", err);
+        setError(err.message || "获取产品失败");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   const featuredProducts = [
@@ -333,6 +381,101 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">咖啡小店</h1>
+
+        <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">系统状态</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium">后端API状态</h3>
+              <p className="mt-2">
+                {healthStatus ? (
+                  <span
+                    className={`px-2 py-1 rounded-full text-sm ${
+                      healthStatus === "正常"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {healthStatus}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">检查中...</span>
+                )}
+              </p>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium">认证状态</h3>
+              <p className="mt-2">
+                {isAuthenticated ? (
+                  <span className="px-2 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                    已登录: {user?.name}
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                    未登录
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">产品列表</h2>
+          {loading ? (
+            <p className="text-gray-500">加载中...</p>
+          ) : error ? (
+            <div className="bg-red-100 text-red-800 p-4 rounded-lg">
+              <p>{error}</p>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <div
+                  key={product._id}
+                  className="border rounded-lg overflow-hidden"
+                >
+                  <div className="h-48 bg-gray-200">
+                    {product.mainImage && (
+                      <img
+                        src={product.mainImage}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-medium">{product.name}</h3>
+                    <p className="text-gray-600 text-sm mt-1">
+                      {product.description.substring(0, 100)}...
+                    </p>
+                    <div className="mt-2 flex justify-between items-center">
+                      <span className="font-bold text-lg">
+                        ¥{product.price.toFixed(2)}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          product.inStock
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {product.inStock ? "有库存" : "缺货"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">暂无产品</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
