@@ -77,6 +77,16 @@ async function deploy() {
       }
     }
 
+    // 检查是否存在自定义域名配置
+    const publicDir = path.join(__dirname, "../public");
+    const cnameFilePath = path.join(publicDir, "CNAME");
+    const hasCNAME = fs.existsSync(cnameFilePath);
+
+    if (hasCNAME) {
+      const customDomain = fs.readFileSync(cnameFilePath, "utf8").trim();
+      log.info(`检测到自定义域名: ${customDomain}`);
+    }
+
     // 1. 构建项目
     log.info("开始构建项目...");
     if (!exec(getBuildCommand())) {
@@ -96,7 +106,26 @@ async function deploy() {
     }
 
     // 3. 修改next.config.js以支持GitHub Pages
-    const ghPagesConfig = `
+    let ghPagesConfig;
+
+    if (hasCNAME) {
+      // 使用自定义域名的配置
+      ghPagesConfig = `
+import { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  output: 'export',
+  // 使用自定义域名时不需要 basePath 和 assetPrefix
+  images: {
+    unoptimized: true,
+  },
+};
+
+export default nextConfig;
+`;
+    } else {
+      // 使用 GitHub Pages 默认域名的配置
+      ghPagesConfig = `
 import { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -110,6 +139,7 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 `;
+    }
 
     fs.writeFileSync(nextConfigPath, ghPagesConfig, "utf8");
     log.success("已更新next.config.ts以支持GitHub Pages");
@@ -131,6 +161,12 @@ export default nextConfig;
     fs.writeFileSync(path.join(outDir, ".nojekyll"), "");
     log.success("已创建.nojekyll文件");
 
+    // 复制 CNAME 文件到 out 目录
+    if (hasCNAME) {
+      fs.copyFileSync(cnameFilePath, path.join(outDir, "CNAME"));
+      log.success("已复制 CNAME 文件到 out 目录");
+    }
+
     // 6. 部署到GitHub Pages
     log.info(`开始部署到GitHub Pages (${BRANCH_NAME}分支)...`);
 
@@ -150,9 +186,14 @@ export default nextConfig;
     }
 
     log.success("部署成功!");
-    log.info(
-      `您的网站已部署到: https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/`
-    );
+    if (hasCNAME) {
+      const customDomain = fs.readFileSync(cnameFilePath, "utf8").trim();
+      log.info(`您的网站已部署到: https://${customDomain}/`);
+    } else {
+      log.info(
+        `您的网站已部署到: https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/`
+      );
+    }
 
     // 7. 恢复next.config.js
     if (nextConfigContent) {
