@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+Disallow: /checkout
+
+Sitemap: https://coffee.mengyadiary.com/sitemap.xml
