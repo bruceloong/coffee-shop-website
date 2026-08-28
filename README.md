@@ -56,7 +56,7 @@ pnpm dev                          # http://localhost:3000
 
 | 变量 | 说明 | 默认 |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | 站点地址（canonical / sitemap / JSON-LD） | `https://coffee.yss520.online` |
+| `NEXT_PUBLIC_SITE_URL` | 站点地址（canonical / sitemap / JSON-LD） | `https://coffee.mengyadiary.com` |
 | `NEXT_PUBLIC_BASE_PATH` | GitHub Pages 项目页前缀（存在 `public/CNAME` 时留空） | 无 |
 | `NEXT_OUTPUT` | 设为 `export` 启用静态导出（GitHub Pages） | 无 |
 | `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | EmailJS 服务 ID（联系表单真实发送） | 无 |
@@ -102,7 +102,7 @@ coffee-shop-website/
 
 - **自动**：push 到 `main` 触发 `.github/workflows/deploy.yml`（自动识别 `public/CNAME` 决定是否加 basePath）。
 - **本地**：`pnpm deploy`（脚本逻辑与 CI 一致，通过环境变量注入配置）。
-- 自定义域名：`public/CNAME` 内容为 `coffee.yss520.online`。
+- 自定义域名：`public/CNAME` 内容为 `coffee.mengyadiary.com`。
 
 ### Vercel / Netlify
 

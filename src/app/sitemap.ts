@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://coffee.yss520.online";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://coffee.mengyadiary.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = ["", "/menu", "/about", "/contact", "/cart"] as const;

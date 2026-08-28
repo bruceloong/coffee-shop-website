@@ -26,7 +26,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://coffee.yss520.online";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://coffee.mengyadiary.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

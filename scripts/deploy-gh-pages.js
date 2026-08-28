@@ -12,7 +12,7 @@ const readline = require("readline");
 const GITHUB_USERNAME = "bruceloong";
 const REPO_NAME = "coffee-shop-website";
 const BRANCH_NAME = "gh-pages";
-const SITE_URL = "https://coffee.yss520.online";
+const SITE_URL = "https://coffee.mengyadiary.com";
 
 const colors = {
   reset: "\x1b[0m",
