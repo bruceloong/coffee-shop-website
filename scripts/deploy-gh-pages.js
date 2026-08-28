@@ -1,24 +1,27 @@
+/**
+ * 本地一键部署到 GitHub Pages。
+ *
+ * 与 CI（.github/workflows/deploy.yml）保持一致：通过环境变量注入配置，
+ * 不再在构建时改写 next.config.ts。
+ */
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const readline = require("readline");
 
-// 配置
-const GITHUB_USERNAME = "bruceloong"; // 替换为您的GitHub用户名
-const REPO_NAME = "coffee-shop-website"; // 替换为您的仓库名称
-const BRANCH_NAME = "gh-pages"; // GitHub Pages分支名称
-const PACKAGE_MANAGER = "pnpm"; // 包管理器: npm, yarn, pnpm
+const GITHUB_USERNAME = "bruceloong";
+const REPO_NAME = "coffee-shop-website";
+const BRANCH_NAME = "gh-pages";
+const SITE_URL = "https://coffee.yss520.online";
 
-// 颜色输出
 const colors = {
   reset: "\x1b[0m",
-  bright: "\x1b[1m",
   green: "\x1b[32m",
   yellow: "\x1b[33m",
   red: "\x1b[31m",
   cyan: "\x1b[36m",
 };
 
-// 日志函数
 const log = {
   info: (msg) => console.log(`${colors.cyan}ℹ ${msg}${colors.reset}`),
   success: (msg) => console.log(`${colors.green}✓ ${msg}${colors.reset}`),
@@ -26,186 +29,79 @@ const log = {
   error: (msg) => console.log(`${colors.red}✗ ${msg}${colors.reset}`),
 };
 
-// 获取构建命令
-function getBuildCommand() {
-  switch (PACKAGE_MANAGER) {
-    case "yarn":
-      return "yarn build";
-    case "pnpm":
-      return "pnpm run build";
-    default:
-      return "npm run build";
-  }
+function exec(command, options = {}) {
+  log.info(`执行: ${command}`);
+  execSync(command, { stdio: "inherit", ...options });
 }
 
-// 执行命令并打印输出
-function exec(command) {
-  try {
-    log.info(`执行: ${command}`);
-    execSync(command, { stdio: "inherit" });
-    return true;
-  } catch (error) {
-    log.error(`命令执行失败: ${command}`);
-    log.error(error.message);
-    return false;
-  }
+function ask(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
 }
 
-// 主函数
 async function deploy() {
   try {
-    // 检查是否有未提交的更改
-    log.info("检查工作区状态...");
+    // 1. 确认工作区状态（插值均为上方硬编码常量，无 shell 注入风险）
     const status = execSync("git status --porcelain").toString().trim();
-
     if (status) {
-      log.warning("您有未提交的更改。建议先提交或暂存这些更改。");
-      const readline = require("readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      const answer = await new Promise((resolve) => {
-        readline.question("是否继续部署? (y/n): ", resolve);
-      });
-
-      readline.close();
-
-      if (answer.toLowerCase() !== "y") {
+      log.warning("工作区有未提交的更改，建议先提交或暂存。");
+      const answer = await ask("是否继续部署? (y/n): ");
+      if (answer !== "y") {
         log.info("部署已取消");
         return;
       }
     }
 
-    // 检查是否存在自定义域名配置
-    const publicDir = path.join(__dirname, "../public");
-    const cnameFilePath = path.join(publicDir, "CNAME");
-    const hasCNAME = fs.existsSync(cnameFilePath);
+    // 2. 组装环境变量（与 next.config.ts / CI 对齐）
+    const rootDir = path.join(__dirname, "..");
+    const hasCNAME = fs.existsSync(path.join(rootDir, "public", "CNAME"));
+    const env = {
+      ...process.env,
+      NEXT_OUTPUT: "export",
+      NEXT_PUBLIC_SITE_URL: SITE_URL,
+      NEXT_PUBLIC_BASE_PATH: hasCNAME ? "" : `/${REPO_NAME}`,
+    };
 
     if (hasCNAME) {
-      const customDomain = fs.readFileSync(cnameFilePath, "utf8").trim();
-      log.info(`检测到自定义域名: ${customDomain}`);
+      log.info(`检测到自定义域名: ${fs.readFileSync(path.join(rootDir, "public", "CNAME"), "utf8").trim()}`);
     }
 
-    // 1. 构建项目
+    // 3. 构建
     log.info("开始构建项目...");
-    if (!exec(getBuildCommand())) {
-      return;
-    }
+    exec("pnpm run build", { cwd: rootDir, env });
     log.success("项目构建完成");
 
-    // 2. 为GitHub Pages创建next.config.js的备份
-    log.info("配置Next.js以支持GitHub Pages...");
-    const nextConfigPath = path.join(__dirname, "../next.config.ts");
-    let nextConfigContent = "";
-
-    if (fs.existsSync(nextConfigPath)) {
-      nextConfigContent = fs.readFileSync(nextConfigPath, "utf8");
-      fs.writeFileSync(`${nextConfigPath}.backup`, nextConfigContent, "utf8");
-      log.success("已创建next.config.ts的备份");
-    }
-
-    // 3. 修改next.config.js以支持GitHub Pages
-    let ghPagesConfig;
-
-    if (hasCNAME) {
-      // 使用自定义域名的配置
-      ghPagesConfig = `
-import { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
-  output: 'export',
-  // 使用自定义域名时不需要 basePath 和 assetPrefix
-  images: {
-    unoptimized: true,
-  },
-};
-
-export default nextConfig;
-`;
-    } else {
-      // 使用 GitHub Pages 默认域名的配置
-      ghPagesConfig = `
-import { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
-  output: 'export',
-  basePath: '/${REPO_NAME}',
-  assetPrefix: '/${REPO_NAME}/',
-  images: {
-    unoptimized: true,
-  },
-};
-
-export default nextConfig;
-`;
-    }
-
-    fs.writeFileSync(nextConfigPath, ghPagesConfig, "utf8");
-    log.success("已更新next.config.ts以支持GitHub Pages");
-
-    // 4. 重新构建项目
-    log.info("使用GitHub Pages配置重新构建项目...");
-    if (!exec(getBuildCommand())) {
-      // 恢复备份
-      if (nextConfigContent) {
-        fs.writeFileSync(nextConfigPath, nextConfigContent, "utf8");
-        log.info("已恢复next.config.ts");
-      }
-      return;
-    }
-    log.success("项目重新构建完成");
-
-    // 5. 创建.nojekyll文件（防止GitHub Pages使用Jekyll处理）
-    const outDir = path.join(__dirname, "../out");
+    // 4. .nojekyll + CNAME
+    const outDir = path.join(rootDir, "out");
     fs.writeFileSync(path.join(outDir, ".nojekyll"), "");
-    log.success("已创建.nojekyll文件");
-
-    // 复制 CNAME 文件到 out 目录
     if (hasCNAME) {
-      fs.copyFileSync(cnameFilePath, path.join(outDir, "CNAME"));
+      fs.copyFileSync(path.join(rootDir, "public", "CNAME"), path.join(outDir, "CNAME"));
       log.success("已复制 CNAME 文件到 out 目录");
     }
 
-    // 6. 部署到GitHub Pages
-    log.info(`开始部署到GitHub Pages (${BRANCH_NAME}分支)...`);
-
-    // 初始化新的git仓库
-    const commands = [
-      `cd ${outDir}`,
-      "git init",
-      "git add -A",
-      `git commit -m "Deploy to GitHub Pages"`,
-      `git push -f git@github.com:${GITHUB_USERNAME}/${REPO_NAME}.git main:${BRANCH_NAME}`,
-    ];
-
-    const deployCommand = commands.join(" && ");
-    if (!exec(deployCommand)) {
-      log.error("部署失败");
-      return;
-    }
+    // 5. 推送到 gh-pages 分支
+    log.info(`开始部署到 GitHub Pages (${BRANCH_NAME} 分支)...`);
+    exec(
+      `git init && git add -A && git commit -m "Deploy to GitHub Pages" && git push -f git@github.com:${GITHUB_USERNAME}/${REPO_NAME}.git main:${BRANCH_NAME}`,
+      { cwd: outDir }
+    );
 
     log.success("部署成功!");
-    if (hasCNAME) {
-      const customDomain = fs.readFileSync(cnameFilePath, "utf8").trim();
-      log.info(`您的网站已部署到: https://${customDomain}/`);
-    } else {
-      log.info(
-        `您的网站已部署到: https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/`
-      );
-    }
-
-    // 7. 恢复next.config.js
-    if (nextConfigContent) {
-      fs.writeFileSync(nextConfigPath, nextConfigContent, "utf8");
-      fs.unlinkSync(`${nextConfigPath}.backup`);
-      log.success("已恢复原始next.config.ts");
-    }
+    log.info(
+      hasCNAME
+        ? `您的网站已部署到: https://${fs.readFileSync(path.join(rootDir, "public", "CNAME"), "utf8").trim()}/`
+        : `您的网站已部署到: https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/`
+    );
   } catch (error) {
     log.error("部署过程中发生错误:");
     log.error(error.message);
+    process.exitCode = 1;
   }
 }
 
-// 执行部署
 deploy();

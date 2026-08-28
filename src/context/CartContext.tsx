@@ -2,142 +2,139 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
-  useState,
   useEffect,
-  ReactNode,
+  useMemo,
+  useState,
+  type ReactNode,
 } from "react";
-import { StaticImageData } from "next/image";
+import type { CartItem, MenuItem } from "@/types";
 
-// 购物车商品接口
-export interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  image: StaticImageData;
-  quantity: number;
-}
+const STORAGE_KEY = "brew-haven-cart";
 
-// 购物车上下文接口
-interface CartContextType {
-  cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, "quantity">) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  clearCart: () => void;
-  totalItems: number;
-  totalPrice: number;
-}
-
-// 创建上下文
-const CartContext = createContext<CartContextType | undefined>(undefined);
-
-// 购物车提供者组件
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
-
-  // 从本地存储加载购物车数据
-  useEffect(() => {
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      try {
-        const parsedCart = JSON.parse(storedCart);
-        // 由于图片对象无法序列化，这里需要特殊处理
-        // 实际项目中可能需要存储图片路径而非对象
-        setCartItems(parsedCart);
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error);
-      }
-    }
-  }, []);
-
-  // 保存购物车数据到本地存储
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      // 注意：这里的图片对象无法正确序列化，实际项目中需要特殊处理
-      localStorage.setItem("cart", JSON.stringify(cartItems));
-    }
-  }, [cartItems]);
-
-  // 计算总数量和总价格
-  useEffect(() => {
-    const itemCount = cartItems.reduce(
-      (total, item) => total + item.quantity,
-      0
-    );
-    setTotalItems(itemCount);
-
-    const price = cartItems.reduce((total, item) => {
-      // 移除价格中的货币符号并转换为数字
-      const priceValue = parseFloat(item.price.replace(/[^\d.]/g, ""));
-      return total + priceValue * item.quantity;
-    }, 0);
-    setTotalPrice(price);
-  }, [cartItems]);
-
-  // 添加商品到购物车
-  const addToCart = (item: Omit<CartItem, "quantity">) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
-      if (existingItem) {
-        // 如果商品已存在，增加数量
-        return prevItems.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      } else {
-        // 如果商品不存在，添加新商品
-        return [...prevItems, { ...item, quantity: 1 }];
-      }
-    });
-  };
-
-  // 从购物车移除商品
-  const removeFromCart = (id: number) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
-  };
-
-  // 更新商品数量
-  const updateQuantity = (id: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-
-    setCartItems((prevItems) =>
-      prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
-  };
-
-  // 清空购物车
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem("cart");
-  };
-
+/** 校验 localStorage 恢复的数据，防止脏数据导致渲染崩溃 */
+function isValidCartItem(item: unknown): item is CartItem {
+  if (typeof item !== "object" || item === null) return false;
+  const it = item as Record<string, unknown>;
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        totalItems,
-        totalPrice,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+    typeof it.id === "number" &&
+    typeof it.name === "string" &&
+    typeof it.price === "number" &&
+    typeof it.imageSrc === "string" &&
+    typeof it.quantity === "number" &&
+    it.quantity > 0
   );
 }
 
-// 自定义钩子，用于访问购物车上下文
-export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
+function readStoredCart(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidCartItem);
+  } catch {
+    return [];
   }
-  return context;
+}
+
+interface CartContextValue {
+  cartItems: CartItem[];
+  /** localStorage 恢复是否完成（避免 SSR 水合期间 badge 闪烁） */
+  isHydrated: boolean;
+  totalItems: number;
+  totalPrice: number;
+  addToCart: (item: Pick<MenuItem, "id" | "name" | "price"> & { imageSrc: string }) => void;
+  removeFromCart: (id: number) => void;
+  updateQuantity: (id: number, quantity: number) => void;
+  clearCart: () => void;
+}
+
+const CartContext = createContext<CartContextValue | undefined>(undefined);
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // 挂载后从 localStorage 恢复
+  useEffect(() => {
+    setCartItems(readStoredCart());
+    setIsHydrated(true);
+  }, []);
+
+  // 恢复完成后，任何变化都无条件持久化（包括清空为空数组）
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
+    } catch {
+      // 隐私模式等场景下写入失败时静默降级，不影响功能
+    }
+  }, [cartItems, isHydrated]);
+
+  const addToCart = useCallback(
+    (item: Pick<MenuItem, "id" | "name" | "price"> & { imageSrc: string }) => {
+      setCartItems((prev) => {
+        const existing = prev.find((i) => i.id === item.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          );
+        }
+        return [...prev, { ...item, quantity: 1 }];
+      });
+    },
+    []
+  );
+
+  const removeFromCart = useCallback((id: number) => {
+    setCartItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  const updateQuantity = useCallback((id: number, quantity: number) => {
+    setCartItems((prev) => {
+      if (quantity <= 0) return prev.filter((i) => i.id !== id);
+      return prev.map((i) => (i.id === id ? { ...i, quantity } : i));
+    });
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+  }, []);
+
+  const totalItems = useMemo(
+    () => cartItems.reduce((sum, i) => sum + i.quantity, 0),
+    [cartItems]
+  );
+
+  const totalPrice = useMemo(
+    () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    [cartItems]
+  );
+
+  const value = useMemo(
+    () => ({
+      cartItems,
+      isHydrated,
+      totalItems,
+      totalPrice,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+    }),
+    [cartItems, isHydrated, totalItems, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart]
+  );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart(): CartContextValue {
+  const ctx = useContext(CartContext);
+  if (!ctx) {
+    throw new Error("useCart 必须在 CartProvider 内使用");
+  }
+  return ctx;
 }
