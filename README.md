@@ -48,7 +48,7 @@ pnpm dev                          # http://localhost:3000
 | `pnpm lint` | ESLint 检查 |
 | `pnpm test` | 运行单元测试（vitest run） |
 | `pnpm test:watch` | 测试 watch 模式 |
-| `pnpm deploy` | 构建并部署到 GitHub Pages |
+| `pnpm deploy` | 构建并部署到 Cloudflare Workers |
 
 ## 环境变量
 
@@ -57,8 +57,7 @@ pnpm dev                          # http://localhost:3000
 | 变量 | 说明 | 默认 |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | 站点地址（canonical / sitemap / JSON-LD） | `https://coffee.mengyadiary.com` |
-| `NEXT_PUBLIC_BASE_PATH` | GitHub Pages 项目页前缀（存在 `public/CNAME` 时留空） | 无 |
-| `NEXT_OUTPUT` | 设为 `export` 启用静态导出（GitHub Pages） | 无 |
+| `NEXT_OUTPUT` | 设为 `export` 启用静态导出（Cloudflare Workers 托管产物） | 无 |
 | `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | EmailJS 服务 ID（联系表单真实发送） | 无 |
 | `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID` | EmailJS 模板 ID | 无 |
 | `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | EmailJS 公钥 | 无 |
@@ -69,8 +68,9 @@ pnpm dev                          # http://localhost:3000
 
 ```
 coffee-shop-website/
-├── public/                  # 静态资源（含 CNAME 自定义域名）
-├── scripts/                 # 部署 / 图片下载脚本
+├── public/                  # 静态资源
+├── scripts/                 # 图片下载脚本
+├── wrangler.jsonc           # Cloudflare Workers 部署配置（静态资源 + 自定义域名）
 ├── src/
 │   ├── app/
 │   │   ├── (pages)/         # 路由页面：menu / cart / checkout / about / contact
@@ -98,11 +98,12 @@ coffee-shop-website/
 
 ## 部署
 
-### GitHub Pages（当前使用）
+### Cloudflare Workers（当前使用）
 
-- **自动**：push 到 `main` 触发 `.github/workflows/deploy.yml`（自动识别 `public/CNAME` 决定是否加 basePath）。
-- **本地**：`pnpm deploy`（脚本逻辑与 CI 一致，通过环境变量注入配置）。
-- 自定义域名：`public/CNAME` 内容为 `coffee.mengyadiary.com`。
+- **自动**：push 到 `main` 触发 `.github/workflows/deploy.yml`，由 `cloudflare/wrangler-action` 部署静态产物 `out/`。
+- **本地**：`pnpm deploy`（先 `npx --yes wrangler@4 login`，或导出 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`）。
+- **自定义域名**：`wrangler.jsonc` 的 `routes` 声明 `coffee.mengyadiary.com`，Cloudflare 负责创建 DNS 记录并自动签发、续期证书。
+- **Actions Secrets**：`CLOUDFLARE_API_TOKEN`（权限：Worker Scripts Edit、Zone DNS Read）、`CLOUDFLARE_ACCOUNT_ID`。
 
 ### Vercel / Netlify
 

@@ -10,7 +10,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "node scripts/deploy-gh-pages.js",
+    "deploy": "NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://coffee.mengyadiary.com pnpm build && npx --yes wrangler@4 deploy",
     "pnpm:install": "pnpm install",
     "pnpm:dev": "pnpm run dev",
     "pnpm:build": "pnpm run build",

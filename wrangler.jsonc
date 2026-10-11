@@ -1,0 +1,14 @@
+{
+  "name": "brew-haven",
+  "compatibility_date": "2026-01-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  },
+  // 声明 custom domain 路由后 wrangler 会默认关掉 workers.dev，这里显式保留作为独立健康检查入口
+  "workers_dev": true,
+  "routes": [
+    // 自定义域名由 Cloudflare 建 DNS 记录并自动签发/续期证书，无需手工配 CNAME
+    { "pattern": "coffee.mengyadiary.com", "custom_domain": true }
+  ]
+}
